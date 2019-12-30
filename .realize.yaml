@@ -1,0 +1,23 @@
+settings:
+  legacy:
+    force: false
+    interval: 0s
+schema:
+- name: patchbay-simple-server
+  path: .
+  commands:
+    build:
+      status: true
+      method: go build -race -o build/patchbay-server src/main.go
+    run:
+      status: true
+      method: build/patchbay-server
+  watcher:
+    extensions:
+    - go
+    paths:
+    - /
+    ignored_paths:
+    - .git
+    - .realize
+    - vendor
