@@ -13,7 +13,9 @@ type HandlerPubSub struct {
 }
 
 func (handler HandlerPubSub) HandleConsumer(request *http.Request, responseWriter http.ResponseWriter) {
-	handler.com <- struct{}{}
+	if handler.com != nil {
+		handler.com <- struct{}{}
+	}
 
 	select {
 	case buffer := <-handler.data:
@@ -28,20 +30,22 @@ func (handler HandlerPubSub) HandleConsumer(request *http.Request, responseWrite
 func (handler HandlerPubSub) HandleProducer(request *http.Request, responseWriter http.ResponseWriter) {
 	consumersCount := uint64(0)
 
-ComLoop:
-	for {
-		select {
-		case <-handler.com:
-			consumersCount++
-		default:
-			break ComLoop
+	if handler.com != nil {
+	ComLoop:
+		for {
+			select {
+			case <-handler.com:
+				consumersCount++
+			default:
+				break ComLoop
+			}
 		}
+	} else {
+		consumersCount = 1
 	}
 
 	if consumersCount == 0 {
-		responseWriter.WriteHeader(http.StatusPreconditionFailed)
-		_, err := responseWriter.Write([]byte("no consumers"))
-		utils.LogError(err, request)
+		utils.HttpError(request, responseWriter, http.StatusPreconditionFailed, "no consumers")
 		return
 	}
 

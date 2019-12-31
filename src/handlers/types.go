@@ -10,24 +10,23 @@ type Channel struct {
 	data     map[string]chan bytes.Buffer
 	com      map[string]chan struct{}
 	mux      *sync.Mutex
-	chanSize uint
 }
 
-func (channels *Channel) getChannels(path string) (chan bytes.Buffer, chan struct{}) {
-	channels.mux.Lock()
-	defer channels.mux.Unlock()
+func (channel *Channel) getChannels(path string) (chan bytes.Buffer, chan struct{}) {
+	channel.mux.Lock()
+	defer channel.mux.Unlock()
 
-	_, dataOk := channels.data[path]
+	_, dataOk := channel.data[path]
 	if !dataOk {
-		channels.data[path] = make(chan bytes.Buffer, channels.chanSize)
+		channel.data[path] = make(chan bytes.Buffer)
 	}
 
-	_, comOk := channels.com[path]
+	_, comOk := channel.com[path]
 	if !comOk {
-		channels.com[path] = make(chan struct{}, channels.chanSize)
+		channel.com[path] = make(chan struct{})
 	}
 
-	return channels.data[path], channels.com[path]
+	return channel.data[path], channel.com[path]
 }
 
 type Handler interface {
@@ -35,15 +34,19 @@ type Handler interface {
 	HandleProducer(request *http.Request, responseWriter http.ResponseWriter)
 }
 
-var pubSubChannels = &Channel{data: make(map[string]chan bytes.Buffer), com: make(map[string]chan struct{}), mux: &sync.Mutex{}, chanSize: 100}
-var defaultChannels = &Channel{data: make(map[string]chan bytes.Buffer), com: make(map[string]chan struct{}), mux: &sync.Mutex{}}
+func newChannel() *Channel {
+	return &Channel{data: make(map[string]chan bytes.Buffer), com: make(map[string]chan struct{}), mux: &sync.Mutex{}}
+}
+
+var pubSubChannel = newChannel()
+var defaultChannel = newChannel()
 
 func NewHandlerStandard(urlPath string) Handler {
-	data, _ := defaultChannels.getChannels(urlPath)
-	return HandlerStandard{data: data}
+	data, _ := defaultChannel.getChannels(urlPath)
+	return HandlerPubSub{data: data}
 }
 
 func NewHandlerPubSub(urlPath string) Handler {
-	data, com := pubSubChannels.getChannels(urlPath)
+	data, com := pubSubChannel.getChannels(urlPath)
 	return HandlerPubSub{data: data, com: com}
 }

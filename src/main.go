@@ -11,9 +11,7 @@ var address = ":9001"
 
 func requestHandler(responseWriter http.ResponseWriter, request *http.Request) {
 	if (request.Method != http.MethodGet) && (request.Method != http.MethodPost) {
-		responseWriter.WriteHeader(http.StatusBadRequest)
-		_, err := responseWriter.Write([]byte("wrong http method"))
-		utils.LogError(err, request)
+		utils.HttpError(request, responseWriter, http.StatusBadRequest, "wrong http method")
 		return
 	}
 

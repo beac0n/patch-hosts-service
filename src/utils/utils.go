@@ -12,3 +12,9 @@ func LogError(err error, request *http.Request) {
 		debug.PrintStack()
 	}
 }
+
+func HttpError(request *http.Request, responseWriter http.ResponseWriter, status int, msg string) {
+	responseWriter.WriteHeader(status)
+	_, err := responseWriter.Write([]byte(msg))
+	LogError(err, request)
+}
