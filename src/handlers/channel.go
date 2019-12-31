@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"bytes"
-	"net/http"
 	"sync"
 )
 
@@ -29,24 +28,6 @@ func (channel *Channel) getChannels(path string) (chan bytes.Buffer, chan struct
 	return channel.data[path], channel.com[path]
 }
 
-type Handler interface {
-	HandleConsumer(request *http.Request, responseWriter http.ResponseWriter)
-	HandleProducer(request *http.Request, responseWriter http.ResponseWriter)
-}
-
 func newChannel() *Channel {
 	return &Channel{data: make(map[string]chan bytes.Buffer), com: make(map[string]chan struct{}), mux: &sync.Mutex{}}
-}
-
-var pubSubChannel = newChannel()
-var defaultChannel = newChannel()
-
-func NewHandlerStandard(urlPath string) Handler {
-	data, _ := defaultChannel.getChannels(urlPath)
-	return HandlerPubSub{data: data}
-}
-
-func NewHandlerPubSub(urlPath string) Handler {
-	data, com := pubSubChannel.getChannels(urlPath)
-	return HandlerPubSub{data: data, com: com}
 }

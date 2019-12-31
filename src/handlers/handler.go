@@ -7,12 +7,7 @@ import (
 	"net/http"
 )
 
-type HandlerPubSub struct {
-	data chan bytes.Buffer
-	com  chan struct{}
-}
-
-func (handler HandlerPubSub) HandleConsumer(request *http.Request, responseWriter http.ResponseWriter) {
+func (handler Handler) HandleConsumer(request *http.Request, responseWriter http.ResponseWriter) {
 	if handler.com != nil {
 		handler.com <- struct{}{}
 	}
@@ -27,7 +22,7 @@ func (handler HandlerPubSub) HandleConsumer(request *http.Request, responseWrite
 	}
 }
 
-func (handler HandlerPubSub) HandleProducer(request *http.Request, responseWriter http.ResponseWriter) {
+func (handler Handler) HandleProducer(request *http.Request, responseWriter http.ResponseWriter) {
 	consumersCount := uint64(0)
 
 	if handler.com != nil {
