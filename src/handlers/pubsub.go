@@ -7,11 +7,16 @@ import (
 	"net/http"
 )
 
-func HandleConsumerPubSub(dataChannel chan bytes.Buffer, comChannel chan struct{}, request *http.Request, responseWriter http.ResponseWriter) {
-	comChannel <- struct{}{}
+type HandlerPubSub struct {
+	data chan bytes.Buffer
+	com  chan struct{}
+}
+
+func (handler HandlerPubSub) HandleConsumer(request *http.Request, responseWriter http.ResponseWriter) {
+	handler.com <- struct{}{}
 
 	select {
-	case buffer := <-dataChannel:
+	case buffer := <-handler.data:
 		_, err := io.Copy(responseWriter, &buffer)
 
 		utils.LogError(err, request)
@@ -20,13 +25,13 @@ func HandleConsumerPubSub(dataChannel chan bytes.Buffer, comChannel chan struct{
 	}
 }
 
-func HandleProducerPubSub(dataChannel chan bytes.Buffer, comChannel chan struct{}, request *http.Request, responseWriter http.ResponseWriter) {
+func (handler HandlerPubSub) HandleProducer(request *http.Request, responseWriter http.ResponseWriter) {
 	consumersCount := uint64(0)
 
-	ComLoop:
+ComLoop:
 	for {
 		select {
-		case <-comChannel:
+		case <-handler.com:
 			consumersCount++
 		default:
 			break ComLoop
@@ -50,7 +55,7 @@ func HandleProducerPubSub(dataChannel chan bytes.Buffer, comChannel chan struct{
 
 	for i := consumersCount; i > 0; i-- {
 		select {
-		case dataChannel <- *buffer:
+		case handler.data <- *buffer:
 		case <-request.Context().Done():
 			return
 		}

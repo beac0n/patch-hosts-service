@@ -7,9 +7,13 @@ import (
 	"net/http"
 )
 
-func HandleConsumerDefault(dataChannel chan bytes.Buffer, comChannel chan struct{}, request *http.Request, responseWriter http.ResponseWriter) {
+type HandlerStandard struct {
+	data chan bytes.Buffer
+}
+
+func (handler HandlerStandard) HandleConsumer(request *http.Request, responseWriter http.ResponseWriter) {
 	select {
-	case buffer := <-dataChannel:
+	case buffer := <-handler.data:
 		_, err := io.Copy(responseWriter, &buffer)
 
 		utils.LogError(err, request)
@@ -18,7 +22,7 @@ func HandleConsumerDefault(dataChannel chan bytes.Buffer, comChannel chan struct
 	}
 }
 
-func HandleProducerDefault(dataChannel chan bytes.Buffer, comChannel chan struct{}, request *http.Request, responseWriter http.ResponseWriter) {
+func (handler HandlerStandard) HandleProducer(request *http.Request, responseWriter http.ResponseWriter) {
 	buffer := new(bytes.Buffer)
 	_, err := buffer.ReadFrom(request.Body)
 
@@ -28,7 +32,7 @@ func HandleProducerDefault(dataChannel chan bytes.Buffer, comChannel chan struct
 	}
 
 	select {
-	case dataChannel <- *buffer:
+	case handler.data <- *buffer:
 	case <-request.Context().Done():
 	}
 }
