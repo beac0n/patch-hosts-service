@@ -4,6 +4,7 @@ import (
 	"../utils"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 )
 
 func (handler Handler) HandleConsumer(request *http.Request, responseWriter http.ResponseWriter) {
@@ -26,8 +27,12 @@ func (handler Handler) HandleProducer(request *http.Request, responseWriter http
 		return
 	}
 
-	if request.ContentLength > 10*1000*1000 {
-		http.Error(responseWriter, "", http.StatusRequestEntityTooLarge)
+	maxReqSizeInByte := handler.maxReqSizeInMb * 1000 * 1000
+	if request.ContentLength > maxReqSizeInByte {
+		maxReqSizeInByteStr := strconv.FormatInt(maxReqSizeInByte, 10)
+		reqContentLenStr := strconv.FormatInt(request.ContentLength, 10)
+		errorMsg := "max. request size is " + maxReqSizeInByteStr + ", got " + reqContentLenStr
+		http.Error(responseWriter, errorMsg, http.StatusRequestEntityTooLarge)
 		return
 	}
 
