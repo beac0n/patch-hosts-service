@@ -2,7 +2,6 @@ package main
 
 import (
 	"./handlers"
-	"./utils"
 	"log"
 	"net/http"
 )
@@ -11,7 +10,7 @@ var address = ":9001"
 
 func requestHandler(responseWriter http.ResponseWriter, request *http.Request) {
 	if (request.Method != http.MethodGet) && (request.Method != http.MethodPost) {
-		utils.HttpError(request, responseWriter, http.StatusBadRequest, "wrong http method")
+		http.Error(responseWriter, "wrong http method", http.StatusBadRequest)
 		return
 	}
 
@@ -35,6 +34,6 @@ func main() {
 	log.Println("running on", address)
 
 	if err := http.ListenAndServe(address, http.HandlerFunc(requestHandler)); err != nil {
-		log.Fatal(err)
+		log.Fatal("FATAL ERROR:", err)
 	}
 }

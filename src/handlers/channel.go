@@ -1,8 +1,6 @@
 package handlers
 
-import (
-	"sync"
-)
+import "sync"
 
 type Channel struct {
 	data *mapChanBuffer

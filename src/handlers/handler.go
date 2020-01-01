@@ -21,24 +21,20 @@ func (handler Handler) HandleConsumer(request *http.Request, responseWriter http
 }
 
 func (handler Handler) HandleProducer(request *http.Request, responseWriter http.ResponseWriter) {
-	consumersCount := uint64(0)
-
-	if handler.com != nil {
-	ComLoop:
-		for {
-			select {
-			case <-handler.com:
-				consumersCount++
-			default:
-				break ComLoop
-			}
-		}
-	} else {
-		consumersCount = 1
+	if request.ContentLength <= 0 {
+		http.Error(responseWriter, "no content", http.StatusBadRequest)
+		return
 	}
 
+	if request.ContentLength > 10*1000*1000 {
+		http.Error(responseWriter, "", http.StatusRequestEntityTooLarge)
+		return
+	}
+
+	consumersCount := handler.getConsumerCount()
+
 	if consumersCount == 0 {
-		utils.HttpError(request, responseWriter, http.StatusPreconditionFailed, "no consumers")
+		http.Error(responseWriter, "no consumers", http.StatusPreconditionFailed)
 		return
 	}
 
@@ -49,11 +45,34 @@ func (handler Handler) HandleProducer(request *http.Request, responseWriter http
 		return
 	}
 
-	for i := consumersCount; i > 0; i-- {
+	handler.sendDataToConsumers(consumersCount, bodyBytes, request)
+}
+
+func (handler Handler) sendDataToConsumers(consumersCount uint64, bodyBytes []byte, request *http.Request) {
+	for ; consumersCount > 0; consumersCount-- {
 		select {
 		case handler.data <- &bodyBytes:
 		case <-request.Context().Done():
 			return
 		}
 	}
+}
+
+func (handler Handler) getConsumerCount() uint64 {
+	if handler.com == nil {
+		return 1
+	}
+
+	consumersCount := uint64(0)
+ComLoop:
+	for {
+		select {
+		case <-handler.com:
+			consumersCount++
+		default:
+			break ComLoop
+		}
+	}
+
+	return consumersCount
 }
