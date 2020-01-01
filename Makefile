@@ -1,3 +1,5 @@
+setup:
+	go get github.com/oxequa/realize
 dev:
 	realize start
 build:
