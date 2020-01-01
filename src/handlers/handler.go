@@ -2,8 +2,7 @@ package handlers
 
 import (
 	"../utils"
-	"bytes"
-	"io"
+	"io/ioutil"
 	"net/http"
 )
 
@@ -13,9 +12,8 @@ func (handler Handler) HandleConsumer(request *http.Request, responseWriter http
 	}
 
 	select {
-	case buffer := <-handler.data:
-		_, err := io.Copy(responseWriter, &buffer)
-
+	case bodyBytes := <-handler.data:
+		_, err := responseWriter.Write(*bodyBytes)
 		utils.LogError(err, request)
 
 	case <-request.Context().Done():
@@ -44,8 +42,7 @@ func (handler Handler) HandleProducer(request *http.Request, responseWriter http
 		return
 	}
 
-	buffer := new(bytes.Buffer)
-	_, err := buffer.ReadFrom(request.Body)
+	bodyBytes, err := ioutil.ReadAll(request.Body)
 
 	if err != nil {
 		utils.LogError(err, request)
@@ -54,7 +51,7 @@ func (handler Handler) HandleProducer(request *http.Request, responseWriter http
 
 	for i := consumersCount; i > 0; i-- {
 		select {
-		case handler.data <- *buffer:
+		case handler.data <- &bodyBytes:
 		case <-request.Context().Done():
 			return
 		}

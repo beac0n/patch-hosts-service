@@ -1,9 +1,7 @@
 package handlers
 
-import "bytes"
-
 type Handler struct {
-	data chan bytes.Buffer
+	data chan *[]byte
 	com  chan struct{}
 }
 
