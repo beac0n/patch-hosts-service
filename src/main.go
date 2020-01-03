@@ -1,36 +1,18 @@
 package main
 
 import (
-	"./handlers/pubsub"
+	"./handlers"
 	"flag"
 	"log"
 	"net/http"
 )
 
 type RequestHandler struct {
-	maxReqSizeInMb int64
+	pubSubRequestHandler *handlers.PubSubRequestHandler
 }
 
 func (requestHandler *RequestHandler) ServeHTTP(responseWriter http.ResponseWriter, request *http.Request) {
-	if (request.Method != http.MethodGet) && (request.Method != http.MethodPost) {
-		http.Error(responseWriter, "wrong http method", http.StatusBadRequest)
-		return
-	}
-
-	var pubSubHandler pubsub.Handler
-
-	pubSubKeys, ok := request.URL.Query()["pubsub"]
-	if ok && len(pubSubKeys) == 1 && pubSubKeys[0] == "true" {
-		pubSubHandler = pubsub.NewHandlerPubSub(request.URL.Path, requestHandler.maxReqSizeInMb)
-	} else {
-		pubSubHandler = pubsub.NewHandlerStandard(request.URL.Path, requestHandler.maxReqSizeInMb)
-	}
-
-	if request.Method == http.MethodPost {
-		pubSubHandler.HandleProducer(request, responseWriter)
-	} else if request.Method == http.MethodGet {
-		pubSubHandler.HandleConsumer(request, responseWriter)
-	}
+	requestHandler.pubSubRequestHandler.ServeHttp(responseWriter, request)
 }
 
 func main() {
@@ -41,7 +23,9 @@ func main() {
 
 	log.Println("running on", *host)
 
-	requestHandler := &RequestHandler{maxReqSizeInMb: *maxReqSizeInMb}
+	requestHandler := &RequestHandler{
+		pubSubRequestHandler: handlers.NewPubSubRequestHandler(*maxReqSizeInMb),
+	}
 
 	if err := http.ListenAndServe(*host, requestHandler); err != nil {
 		log.Fatal("FATAL ERROR:", err)

@@ -6,15 +6,15 @@ type Handler struct {
 	maxReqSizeInMb int64
 }
 
-var pubSubChannel = newChannel()
-var defaultChannel = newChannel()
+var multiChannel = NewChannel()
+var singlesChannel = NewChannel()
 
-func NewHandlerStandard(urlPath string, maxReqSizeInMb int64) Handler {
-	data, _ := defaultChannel.getChannels(urlPath)
+func NewHandlerSingle(urlPath string, maxReqSizeInMb int64) Handler {
+	data, _ := singlesChannel.getChannels(urlPath)
 	return Handler{data: data, maxReqSizeInMb: maxReqSizeInMb}
 }
 
-func NewHandlerPubSub(urlPath string, maxReqSizeInMb int64) Handler {
-	data, com := pubSubChannel.getChannels(urlPath)
+func NewHandlerMulti(urlPath string, maxReqSizeInMb int64) Handler {
+	data, com := multiChannel.getChannels(urlPath)
 	return Handler{data: data, com: com, maxReqSizeInMb: maxReqSizeInMb}
 }
