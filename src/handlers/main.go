@@ -1,7 +1,9 @@
 package handlers
 
-import "net/http"
-import "./pubsub"
+import (
+	"./pubsub"
+	"net/http"
+)
 
 func NewPubSubRequestHandler(maxReqSizeInMb int64) *PubSubRequestHandler {
 	return &PubSubRequestHandler{maxReqSizeInMb: maxReqSizeInMb}
