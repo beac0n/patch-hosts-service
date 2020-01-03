@@ -1,37 +1,60 @@
 package pubsub
 
-import "sync"
+import (
+	"../../utils"
+	"io/ioutil"
+	"net/http"
+	"strconv"
+)
 
-type channel struct {
-	data *mapChanBuffer
-	com  *mapChanStruct
+type channelWrap struct {
+	data           chan *[]byte
+	com            chan struct{}
+	maxReqSizeInMb int64
 }
 
-type mapChanBuffer struct {
-	syncMap *sync.Map
+func (channelWrap channelWrap) consume(request *http.Request, responseWriter http.ResponseWriter) {
+	if channelWrap.com != nil {
+		channelWrap.com <- struct{}{}
+	}
+
+	select {
+	case bodyBytes := <-channelWrap.data:
+		_, err := responseWriter.Write(*bodyBytes)
+		utils.LogError(err, request)
+
+	case <-request.Context().Done():
+	}
 }
 
-func (mapChanBuffer *mapChanBuffer) LoadOrStore(path string, channel chan *[]byte) (chan *[]byte, bool) {
-	actual, loaded := mapChanBuffer.syncMap.LoadOrStore(path, channel)
-	return actual.(chan *[]byte), loaded
-}
+func (channelWrap channelWrap) produce(request *http.Request, responseWriter http.ResponseWriter) {
+	if request.ContentLength <= 0 {
+		http.Error(responseWriter, "no content", http.StatusBadRequest)
+		return
+	}
 
-type mapChanStruct struct {
-	syncMap *sync.Map
-}
+	maxReqSizeInByte := channelWrap.maxReqSizeInMb * 1000 * 1000
+	if request.ContentLength > maxReqSizeInByte {
+		maxReqSizeInByteStr := strconv.FormatInt(maxReqSizeInByte, 10)
+		reqContentLenStr := strconv.FormatInt(request.ContentLength, 10)
+		errorMsg := "max. request size is " + maxReqSizeInByteStr + ", got " + reqContentLenStr
+		http.Error(responseWriter, errorMsg, http.StatusRequestEntityTooLarge)
+		return
+	}
 
-func (mapChanStruct *mapChanStruct) LoadOrStore(path string, channel chan struct{}) (chan struct{}, bool) {
-	actual, loaded := mapChanStruct.syncMap.LoadOrStore(path, channel)
-	return actual.(chan struct{}), loaded
-}
+	consumersCount := channelWrap.getConsumerCount()
 
-func (channel *channel) getChannels(path string) (chan *[]byte, chan struct{}) {
-	data, _ := channel.data.LoadOrStore(path, make(chan *[]byte))
-	com, _ := channel.com.LoadOrStore(path, make(chan struct{}))
+	if consumersCount == 0 {
+		http.Error(responseWriter, "no consumers", http.StatusPreconditionFailed)
+		return
+	}
 
-	return data, com
-}
+	bodyBytes, err := ioutil.ReadAll(request.Body)
 
-func newChannel() *channel {
-	return &channel{data: &mapChanBuffer{&sync.Map{}}, com: &mapChanStruct{&sync.Map{}}}
+	if err != nil {
+		utils.LogError(err, request)
+		return
+	}
+
+	channelWrap.sendDataToConsumers(consumersCount, bodyBytes, request)
 }

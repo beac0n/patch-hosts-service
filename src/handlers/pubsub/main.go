@@ -6,10 +6,12 @@ type RequestHandler struct {
 	maxReqSizeInMb int64
 }
 
+var multiplesChannelWrap = newChannelMapWrap()
+var singlesChannelWrap = newChannelMapWrap()
+
 func NewRequestHandler(maxReqSizeInMb int64) *RequestHandler {
 	return &RequestHandler{maxReqSizeInMb: maxReqSizeInMb}
 }
-
 
 func (requestHandler *RequestHandler) ServeHttp(responseWriter http.ResponseWriter, request *http.Request) {
 	if (request.Method != http.MethodGet) && (request.Method != http.MethodPost) {
@@ -17,18 +19,25 @@ func (requestHandler *RequestHandler) ServeHttp(responseWriter http.ResponseWrit
 		return
 	}
 
-	var handler handler
+	var wrap channelWrap
 
 	pubSubKeys, ok := request.URL.Query()["pubsub"]
 	if ok && len(pubSubKeys) == 1 && pubSubKeys[0] == "true" {
-		handler = newHandlerMulti(request.URL.Path, requestHandler.maxReqSizeInMb)
+		wrap = channelWrap{
+			data:           multiplesChannelWrap.getDataChannel(request.URL.Path),
+			com:            multiplesChannelWrap.getComChannel(request.URL.Path),
+			maxReqSizeInMb: requestHandler.maxReqSizeInMb,
+		}
 	} else {
-		handler = newHandlerSingle(request.URL.Path, requestHandler.maxReqSizeInMb)
+		wrap = channelWrap{
+			data:           singlesChannelWrap.getDataChannel(request.URL.Path),
+			maxReqSizeInMb: requestHandler.maxReqSizeInMb,
+		}
 	}
 
 	if request.Method == http.MethodPost {
-		handler.handleProducer(request, responseWriter)
+		wrap.produce(request, responseWriter)
 	} else if request.Method == http.MethodGet {
-		handler.handleConsumer(request, responseWriter)
+		wrap.consume(request, responseWriter)
 	}
 }
