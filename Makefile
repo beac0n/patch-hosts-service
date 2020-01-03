@@ -8,5 +8,3 @@ clean:
 	rm -rf build
 run:
 	build/patchbay-server
-install:
-	install build/patchbay-server /usr/local/bin

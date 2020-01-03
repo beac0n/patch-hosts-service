@@ -1,33 +1,35 @@
 package main
 
 import (
-	"./handlers"
+	"./handlers/pubsub"
 	"flag"
 	"log"
 	"net/http"
 )
 
-func requestHandler(maxReqSizeInMb int64) func(responseWriter http.ResponseWriter, request *http.Request) {
-	return func(responseWriter http.ResponseWriter, request *http.Request) {
-		if (request.Method != http.MethodGet) && (request.Method != http.MethodPost) {
-			http.Error(responseWriter, "wrong http method", http.StatusBadRequest)
-			return
-		}
+type RequestHandler struct {
+	maxReqSizeInMb int64
+}
 
-		var handler handlers.Handler
+func (requestHandler *RequestHandler) ServeHTTP(responseWriter http.ResponseWriter, request *http.Request) {
+	if (request.Method != http.MethodGet) && (request.Method != http.MethodPost) {
+		http.Error(responseWriter, "wrong http method", http.StatusBadRequest)
+		return
+	}
 
-		pubSubKeys, ok := request.URL.Query()["pubsub"]
-		if ok && len(pubSubKeys) == 1 && pubSubKeys[0] == "true" {
-			handler = handlers.NewHandlerPubSub(request.URL.Path, maxReqSizeInMb)
-		} else {
-			handler = handlers.NewHandlerStandard(request.URL.Path, maxReqSizeInMb)
-		}
+	var pubSubHandler pubsub.Handler
 
-		if request.Method == http.MethodPost {
-			handler.HandleProducer(request, responseWriter)
-		} else if request.Method == http.MethodGet {
-			handler.HandleConsumer(request, responseWriter)
-		}
+	pubSubKeys, ok := request.URL.Query()["pubsub"]
+	if ok && len(pubSubKeys) == 1 && pubSubKeys[0] == "true" {
+		pubSubHandler = pubsub.NewHandlerPubSub(request.URL.Path, requestHandler.maxReqSizeInMb)
+	} else {
+		pubSubHandler = pubsub.NewHandlerStandard(request.URL.Path, requestHandler.maxReqSizeInMb)
+	}
+
+	if request.Method == http.MethodPost {
+		pubSubHandler.HandleProducer(request, responseWriter)
+	} else if request.Method == http.MethodGet {
+		pubSubHandler.HandleConsumer(request, responseWriter)
 	}
 }
 
@@ -39,7 +41,9 @@ func main() {
 
 	log.Println("running on", *host)
 
-	if err := http.ListenAndServe(*host, http.HandlerFunc(requestHandler(*maxReqSizeInMb))); err != nil {
+	requestHandler := &RequestHandler{maxReqSizeInMb: *maxReqSizeInMb}
+
+	if err := http.ListenAndServe(*host, requestHandler); err != nil {
 		log.Fatal("FATAL ERROR:", err)
 	}
 }

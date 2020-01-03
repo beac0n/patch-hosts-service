@@ -1,7 +1,7 @@
-package handlers
+package pubsub
 
 import (
-	"../utils"
+	"../../utils"
 	"io/ioutil"
 	"net/http"
 	"strconv"

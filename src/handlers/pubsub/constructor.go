@@ -1,4 +1,4 @@
-package handlers
+package pubsub
 
 type Handler struct {
 	data           chan *[]byte
