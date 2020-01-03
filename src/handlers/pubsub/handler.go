@@ -7,7 +7,7 @@ import (
 	"strconv"
 )
 
-func (handler Handler) HandleConsumer(request *http.Request, responseWriter http.ResponseWriter) {
+func (handler handler) handleConsumer(request *http.Request, responseWriter http.ResponseWriter) {
 	if handler.com != nil {
 		handler.com <- struct{}{}
 	}
@@ -21,7 +21,7 @@ func (handler Handler) HandleConsumer(request *http.Request, responseWriter http
 	}
 }
 
-func (handler Handler) HandleProducer(request *http.Request, responseWriter http.ResponseWriter) {
+func (handler handler) handleProducer(request *http.Request, responseWriter http.ResponseWriter) {
 	if request.ContentLength <= 0 {
 		http.Error(responseWriter, "no content", http.StatusBadRequest)
 		return
@@ -53,7 +53,7 @@ func (handler Handler) HandleProducer(request *http.Request, responseWriter http
 	handler.sendDataToConsumers(consumersCount, bodyBytes, request)
 }
 
-func (handler Handler) sendDataToConsumers(consumersCount uint64, bodyBytes []byte, request *http.Request) {
+func (handler handler) sendDataToConsumers(consumersCount uint64, bodyBytes []byte, request *http.Request) {
 	for ; consumersCount > 0; consumersCount-- {
 		select {
 		case handler.data <- &bodyBytes:
@@ -63,7 +63,7 @@ func (handler Handler) sendDataToConsumers(consumersCount uint64, bodyBytes []by
 	}
 }
 
-func (handler Handler) getConsumerCount() uint64 {
+func (handler handler) getConsumerCount() uint64 {
 	if handler.com == nil {
 		return 1
 	}

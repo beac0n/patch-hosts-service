@@ -2,7 +2,7 @@ package pubsub
 
 import "sync"
 
-type Channel struct {
+type channel struct {
 	data *mapChanBuffer
 	com  *mapChanStruct
 }
@@ -25,13 +25,13 @@ func (mapChanStruct *mapChanStruct) LoadOrStore(path string, channel chan struct
 	return actual.(chan struct{}), loaded
 }
 
-func (channel *Channel) getChannels(path string) (chan *[]byte, chan struct{}) {
+func (channel *channel) getChannels(path string) (chan *[]byte, chan struct{}) {
 	data, _ := channel.data.LoadOrStore(path, make(chan *[]byte))
 	com, _ := channel.com.LoadOrStore(path, make(chan struct{}))
 
 	return data, com
 }
 
-func NewChannel() *Channel {
-	return &Channel{data: &mapChanBuffer{&sync.Map{}}, com: &mapChanStruct{&sync.Map{}}}
+func newChannel() *channel {
+	return &channel{data: &mapChanBuffer{&sync.Map{}}, com: &mapChanStruct{&sync.Map{}}}
 }

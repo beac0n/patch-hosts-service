@@ -1,14 +1,14 @@
 package main
 
 import (
-	"./handlers"
+	"./handlers/pubsub"
 	"flag"
 	"log"
 	"net/http"
 )
 
 type RequestHandler struct {
-	pubSubRequestHandler *handlers.PubSubRequestHandler
+	pubSubRequestHandler *pubsub.RequestHandler
 }
 
 func (requestHandler *RequestHandler) ServeHTTP(responseWriter http.ResponseWriter, request *http.Request) {
@@ -24,7 +24,7 @@ func main() {
 	log.Println("running on", *host)
 
 	requestHandler := &RequestHandler{
-		pubSubRequestHandler: handlers.NewPubSubRequestHandler(*maxReqSizeInMb),
+		pubSubRequestHandler: pubsub.NewRequestHandler(*maxReqSizeInMb),
 	}
 
 	if err := http.ListenAndServe(*host, requestHandler); err != nil {
