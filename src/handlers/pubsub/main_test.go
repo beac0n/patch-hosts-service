@@ -5,14 +5,15 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 )
 
-func TestServeHttpSingle(test *testing.T) {
-	getRequest, _ := http.NewRequest("GET", "/foobar", nil)
-	postRequest, _ := http.NewRequest("POST", "/foobar", bytes.NewBuffer([]byte("test")))
+var pubSubReqHandler = &RequestHandler{maxReqSize: 10}
 
-	pubSubReqHandler := &RequestHandler{maxReqSize: 10}
+func TestServeHttpSingle(test *testing.T) {
+	data := `test`
+
+	getRequest, _ := http.NewRequest("GET", "/foobar", nil)
+	postRequest, _ := http.NewRequest("POST", "/foobar", bytes.NewBuffer([]byte(data)))
 
 	requestHandler := http.HandlerFunc(pubSubReqHandler.ServeHttp)
 
@@ -20,14 +21,8 @@ func TestServeHttpSingle(test *testing.T) {
 
 	go sendRequest(requestHandler, getRequest, requestRecorderChan)
 
-	requestRecorderPost := httptest.NewRecorder()
-	requestHandler.ServeHTTP(requestRecorderPost, postRequest)
-
-	assertRequest("", requestRecorderPost, test)
-
-	requestRecorderGet := <-requestRecorderChan
-	assertRequest("test", requestRecorderGet, test)
-
+	assertRequest("", sendRequestSync(requestHandler, postRequest), test)
+	assertRequest(data, <-requestRecorderChan, test)
 }
 
 func TestServeHttpMulti(test *testing.T) {
@@ -36,24 +31,17 @@ func TestServeHttpMulti(test *testing.T) {
 	getRequest, _ := http.NewRequest("GET", "/foobar?pubsub=true", nil)
 	postRequest, _ := http.NewRequest("POST", "/foobar?pubsub=true", bytes.NewBuffer([]byte(data)))
 
-	pubSubReqHandler := &RequestHandler{maxReqSize: 10}
-
 	requestHandler := http.HandlerFunc(pubSubReqHandler.ServeHttp)
 
 	numberOfGetRequest := 10000
 
 	requestRecorderChan := make(chan *httptest.ResponseRecorder)
 
-
 	for i := 0; i < numberOfGetRequest; i++ {
 		go sendRequest(requestHandler, getRequest, requestRecorderChan)
 	}
 
-
-	time.Sleep(100 * time.Millisecond)
-
-	requestRecorderPost := httptest.NewRecorder()
-	requestHandler.ServeHTTP(requestRecorderPost, postRequest)
+	requestRecorderPost := sendRequestSync(requestHandler, postRequest)
 
 	assertRequest("", requestRecorderPost, test)
 
@@ -62,20 +50,23 @@ func TestServeHttpMulti(test *testing.T) {
 	}
 }
 
+func sendRequestSync(requestHandler http.HandlerFunc, postRequest *http.Request) *httptest.ResponseRecorder {
+	requestRecorderPost := httptest.NewRecorder()
+	requestHandler.ServeHTTP(requestRecorderPost, postRequest)
+	return requestRecorderPost
+}
+
 func assertRequest(expected string, requestRecorder *httptest.ResponseRecorder, test *testing.T) {
-	requestRecorder.Flush()
 	if status := requestRecorder.Code; status != http.StatusOK {
-		test.Errorf("requestHandler returned wrong status code: got %v want %v ", status, http.StatusOK)
+		test.Errorf("response has wrong status code: got %v want %v ", status, http.StatusOK)
 	}
 
 	if expected == "" {
 		return
 	}
 
-	actual := requestRecorder.Body.String()
-
-	if actual != expected {
-		test.Errorf("requestHandler returned unexpected body: got %v want %v", actual, expected)
+	if actual := requestRecorder.Body.String(); actual != expected {
+		test.Errorf("response has unexpected body: got %v want %v", actual, expected)
 	}
 }
 

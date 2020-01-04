@@ -24,7 +24,7 @@ func main() {
 	log.Println("running on", *host)
 
 	requestHandler := &RequestHandler{
-		pubSubRequestHandler: pubsub.NewRequestHandler(*maxReqSizeInMb),
+		pubSubRequestHandler: pubsub.NewRequestHandler(*maxReqSizeInMb * 1000 * 1000),
 	}
 
 	if err := http.ListenAndServe(*host, requestHandler); err != nil {
