@@ -8,10 +8,9 @@ import (
 )
 
 var pubSubReqHandler = &RequestHandler{maxReqSize: 10}
+var data = `test`
 
 func TestServeHttpSingle(test *testing.T) {
-	data := `test`
-
 	getRequest, _ := http.NewRequest("GET", "/foobar", nil)
 	postRequest, _ := http.NewRequest("POST", "/foobar", bytes.NewBuffer([]byte(data)))
 
@@ -26,8 +25,6 @@ func TestServeHttpSingle(test *testing.T) {
 }
 
 func TestServeHttpMulti(test *testing.T) {
-	data := `test`
-
 	getRequest, _ := http.NewRequest("GET", "/foobar?pubsub=true", nil)
 	postRequest, _ := http.NewRequest("POST", "/foobar?pubsub=true", bytes.NewBuffer([]byte(data)))
 
