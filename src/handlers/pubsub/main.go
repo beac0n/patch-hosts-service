@@ -24,13 +24,13 @@ func (requestHandler *RequestHandler) ServeHttp(responseWriter http.ResponseWrit
 	pubSubKeys, ok := request.URL.Query()["pubsub"]
 	if ok && len(pubSubKeys) == 1 && pubSubKeys[0] == "true" {
 		wrap = channelWrap{
-			data:           multiplesChannelWrap.getDataChannel(request.URL.Path),
-			com:            multiplesChannelWrap.getComChannel(request.URL.Path),
+			data:           multiplesChannelWrap.getDataChannel(request.URL.Path, 0),
+			com:            multiplesChannelWrap.getComChannel(request.URL.Path, 0),
 			maxReqSizeInMb: requestHandler.maxReqSizeInMb,
 		}
 	} else {
 		wrap = channelWrap{
-			data:           singlesChannelWrap.getDataChannel(request.URL.Path),
+			data:           singlesChannelWrap.getDataChannel(request.URL.Path, 0),
 			maxReqSizeInMb: requestHandler.maxReqSizeInMb,
 		}
 	}

@@ -2,20 +2,13 @@ package pubsub
 
 import (
 	"../../utils"
-	"bytes"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 )
 
-type dataChanel struct {
-	bytes  *[]byte
-	length int64
-}
-
 type channelWrap struct {
-	data           chan dataChanel
+	data           chan *[]byte
 	com            chan struct{}
 	maxReqSizeInMb int64
 }
@@ -26,13 +19,9 @@ func (channelWrap channelWrap) consume(request *http.Request, responseWriter htt
 	}
 
 	select {
-	case dataChanel := <-channelWrap.data:
-		newBytes := make([]byte, dataChanel.length)
-		copy(newBytes, *dataChanel.bytes)
-		buffer := bytes.NewBuffer(newBytes)
-		responseWriter.Header().Set("Content-Length", strconv.FormatInt(dataChanel.length, 10))
-		responseWriter.Header().Set("Content-Type", "application/octet-stream")
-		_, err := io.Copy(responseWriter, buffer)
+	case bytes := <-channelWrap.data:
+		responseWriter.Header().Set("Content-Length", strconv.Itoa(len(*bytes)))
+		_, err := responseWriter.Write(*bytes)
 		utils.LogError(err, request)
 
 	case <-request.Context().Done():
@@ -68,5 +57,5 @@ func (channelWrap channelWrap) produce(request *http.Request, responseWriter htt
 		return
 	}
 
-	channelWrap.sendDataToConsumers(consumersCount, bodyBytes, request.ContentLength, request)
+	channelWrap.sendDataToConsumers(consumersCount, bodyBytes, request)
 }

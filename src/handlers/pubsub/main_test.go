@@ -2,6 +2,7 @@ package pubsub
 
 import (
 	"bytes"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -25,8 +26,10 @@ func TestServeHttpSingle(test *testing.T) {
 }
 
 func TestServeHttpMulti(test *testing.T) {
+	data := `test`
+
 	getRequest, _ := http.NewRequest("GET", "/foobar?pubsub=true", nil)
-	postRequest, _ := http.NewRequest("POST", "/foobar?pubsub=true", bytes.NewBuffer([]byte("test")))
+	postRequest, _ := http.NewRequest("POST", "/foobar?pubsub=true", bytes.NewBuffer([]byte(data)))
 
 	pubSubReqHandler := &RequestHandler{maxReqSizeInMb: 10}
 
@@ -42,12 +45,13 @@ func TestServeHttpMulti(test *testing.T) {
 
 	assertRequest("", requestRecorderPost, test)
 
-	assertRequest("test", requestRecorderGet0, test)
-	assertRequest("test", requestRecorderGet1, test)
-	assertRequest("test", requestRecorderGet2, test)
+	assertRequest(data, requestRecorderGet0, test)
+	assertRequest(data, requestRecorderGet1, test)
+	assertRequest(data, requestRecorderGet2, test)
 }
 
 func assertRequest(expected string, requestRecorder *httptest.ResponseRecorder, test *testing.T) {
+	requestRecorder.Flush()
 	if status := requestRecorder.Code; status != http.StatusOK {
 		test.Errorf("requestHandler returned wrong status code: got %v want %v ", status, http.StatusOK)
 	}
@@ -57,6 +61,8 @@ func assertRequest(expected string, requestRecorder *httptest.ResponseRecorder, 
 	}
 
 	actual := requestRecorder.Body.String()
+	log.Println(requestRecorder.Result().Header, actual)
+
 	if actual != expected {
 		test.Errorf("requestHandler returned unexpected body: got %v want %v", actual, expected)
 	}
