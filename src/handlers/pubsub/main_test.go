@@ -32,7 +32,7 @@ func TestServeHttpMulti(test *testing.T) {
 
 	numberOfGetRequest := 10000
 
-	requestRecorderChan := make(chan *httptest.ResponseRecorder)
+	requestRecorderChan := make(chan *httptest.ResponseRecorder, numberOfGetRequest)
 
 	for i := 0; i < numberOfGetRequest; i++ {
 		go sendRequest(requestHandler, getRequest, requestRecorderChan)
