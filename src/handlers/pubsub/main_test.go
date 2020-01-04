@@ -2,7 +2,6 @@ package pubsub
 
 import (
 	"bytes"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -13,14 +12,20 @@ func TestServeHttpSingle(test *testing.T) {
 	getRequest, _ := http.NewRequest("GET", "/foobar", nil)
 	postRequest, _ := http.NewRequest("POST", "/foobar", bytes.NewBuffer([]byte("test")))
 
-	pubSubReqHandler := &RequestHandler{maxReqSizeInMb: 10}
+	pubSubReqHandler := &RequestHandler{maxReqSize: 10}
 
 	requestHandler := http.HandlerFunc(pubSubReqHandler.ServeHttp)
 
-	requestRecorderGet := sendRequest(requestHandler, getRequest, true)
-	requestRecorderPost := sendRequest(requestHandler, postRequest, false)
+	requestRecorderChan := make(chan *httptest.ResponseRecorder)
+
+	go sendRequest(requestHandler, getRequest, requestRecorderChan)
+
+	requestRecorderPost := httptest.NewRecorder()
+	requestHandler.ServeHTTP(requestRecorderPost, postRequest)
 
 	assertRequest("", requestRecorderPost, test)
+
+	requestRecorderGet := <-requestRecorderChan
 	assertRequest("test", requestRecorderGet, test)
 
 }
@@ -31,23 +36,30 @@ func TestServeHttpMulti(test *testing.T) {
 	getRequest, _ := http.NewRequest("GET", "/foobar?pubsub=true", nil)
 	postRequest, _ := http.NewRequest("POST", "/foobar?pubsub=true", bytes.NewBuffer([]byte(data)))
 
-	pubSubReqHandler := &RequestHandler{maxReqSizeInMb: 10}
+	pubSubReqHandler := &RequestHandler{maxReqSize: 10}
 
 	requestHandler := http.HandlerFunc(pubSubReqHandler.ServeHttp)
 
-	requestRecorderGet0 := sendRequest(requestHandler, getRequest, true)
-	requestRecorderGet1 := sendRequest(requestHandler, getRequest, true)
-	requestRecorderGet2 := sendRequest(requestHandler, getRequest, true)
+	numberOfGetRequest := 10000
 
-	time.Sleep(10 * time.Millisecond)
+	requestRecorderChan := make(chan *httptest.ResponseRecorder)
 
-	requestRecorderPost := sendRequest(requestHandler, postRequest, false)
+
+	for i := 0; i < numberOfGetRequest; i++ {
+		go sendRequest(requestHandler, getRequest, requestRecorderChan)
+	}
+
+
+	time.Sleep(100 * time.Millisecond)
+
+	requestRecorderPost := httptest.NewRecorder()
+	requestHandler.ServeHTTP(requestRecorderPost, postRequest)
 
 	assertRequest("", requestRecorderPost, test)
 
-	assertRequest(data, requestRecorderGet0, test)
-	assertRequest(data, requestRecorderGet1, test)
-	assertRequest(data, requestRecorderGet2, test)
+	for i := 0; i < numberOfGetRequest; i++ {
+		assertRequest(data, <-requestRecorderChan, test)
+	}
 }
 
 func assertRequest(expected string, requestRecorder *httptest.ResponseRecorder, test *testing.T) {
@@ -61,21 +73,16 @@ func assertRequest(expected string, requestRecorder *httptest.ResponseRecorder, 
 	}
 
 	actual := requestRecorder.Body.String()
-	log.Println(requestRecorder.Result().Header, actual)
 
 	if actual != expected {
 		test.Errorf("requestHandler returned unexpected body: got %v want %v", actual, expected)
 	}
 }
 
-func sendRequest(requestHandler http.HandlerFunc, request *http.Request, isAsync bool) *httptest.ResponseRecorder {
+func sendRequest(reqHandler http.HandlerFunc, req *http.Request, reqRecChan chan *httptest.ResponseRecorder) {
 	requestRecord := httptest.NewRecorder()
 
-	if isAsync {
-		go requestHandler.ServeHTTP(requestRecord, request)
-	} else {
-		requestHandler.ServeHTTP(requestRecord, request)
-	}
+	reqHandler.ServeHTTP(requestRecord, req)
 
-	return requestRecord
+	reqRecChan <- requestRecord
 }

@@ -3,14 +3,14 @@ package pubsub
 import "net/http"
 
 type RequestHandler struct {
-	maxReqSizeInMb int64
+	maxReqSize int64
 }
 
 var multiplesChannelWrap = newChannelMapWrap()
 var singlesChannelWrap = newChannelMapWrap()
 
-func NewRequestHandler(maxReqSizeInMb int64) *RequestHandler {
-	return &RequestHandler{maxReqSizeInMb: maxReqSizeInMb}
+func NewRequestHandler(maxReqSizeIn int64) *RequestHandler {
+	return &RequestHandler{maxReqSize: maxReqSizeIn}
 }
 
 func (requestHandler *RequestHandler) ServeHttp(responseWriter http.ResponseWriter, request *http.Request) {
@@ -24,14 +24,14 @@ func (requestHandler *RequestHandler) ServeHttp(responseWriter http.ResponseWrit
 	pubSubKeys, ok := request.URL.Query()["pubsub"]
 	if ok && len(pubSubKeys) == 1 && pubSubKeys[0] == "true" {
 		wrap = channelWrap{
-			data:           multiplesChannelWrap.getDataChannel(request.URL.Path, 0),
-			com:            multiplesChannelWrap.getComChannel(request.URL.Path, 0),
-			maxReqSizeInMb: requestHandler.maxReqSizeInMb,
+			data:       multiplesChannelWrap.getDataChannel(request.URL.Path, 0),
+			com:        multiplesChannelWrap.getComChannel(request.URL.Path, 100),
+			maxReqSize: requestHandler.maxReqSize,
 		}
 	} else {
 		wrap = channelWrap{
-			data:           singlesChannelWrap.getDataChannel(request.URL.Path, 0),
-			maxReqSizeInMb: requestHandler.maxReqSizeInMb,
+			data:       singlesChannelWrap.getDataChannel(request.URL.Path, 0),
+			maxReqSize: requestHandler.maxReqSize,
 		}
 	}
 

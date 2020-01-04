@@ -8,9 +8,9 @@ import (
 )
 
 type channelWrap struct {
-	data           chan *[]byte
-	com            chan struct{}
-	maxReqSizeInMb int64
+	data       chan *[]byte
+	com        chan struct{}
+	maxReqSize int64
 }
 
 func (channelWrap channelWrap) consume(request *http.Request, responseWriter http.ResponseWriter) {
@@ -34,12 +34,8 @@ func (channelWrap channelWrap) produce(request *http.Request, responseWriter htt
 		return
 	}
 
-	maxReqSizeInByte := channelWrap.maxReqSizeInMb * 1000 * 1000
-	if request.ContentLength > maxReqSizeInByte {
-		maxReqSizeInByteStr := strconv.FormatInt(maxReqSizeInByte, 10)
-		reqContentLenStr := strconv.FormatInt(request.ContentLength, 10)
-		errorMsg := "max. request size is " + maxReqSizeInByteStr + ", got " + reqContentLenStr
-		http.Error(responseWriter, errorMsg, http.StatusRequestEntityTooLarge)
+	if request.ContentLength > channelWrap.maxReqSize {
+		channelWrap.httpErrorEntityTooLarge(request, responseWriter)
 		return
 	}
 
@@ -57,5 +53,5 @@ func (channelWrap channelWrap) produce(request *http.Request, responseWriter htt
 		return
 	}
 
-	channelWrap.sendDataToConsumers(consumersCount, bodyBytes, request)
+	channelWrap.sendDataToConsumers(consumersCount, &bodyBytes, request)
 }
