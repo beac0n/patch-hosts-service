@@ -2,10 +2,10 @@ package pubsub
 
 import "net/http"
 
-func (channelWrap channelWrap) sendDataToConsumers(consumersCount uint64, bodyBytes []byte, request *http.Request) {
+func (channelWrap channelWrap) sendDataToConsumers(consumersCount uint64, bodyBytes []byte, bodyLen int64, request *http.Request) {
 	for ; consumersCount > 0; consumersCount-- {
 		select {
-		case channelWrap.data <- &bodyBytes:
+		case channelWrap.data <- dataChanel{&bodyBytes, bodyLen}:
 		case <-request.Context().Done():
 			return
 		}

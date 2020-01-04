@@ -6,9 +6,9 @@ type dataChannelMap struct {
 	syncMap *sync.Map
 }
 
-func (mapChanBuffer *dataChannelMap) LoadOrStore(path string, channel chan *[]byte) chan *[]byte {
+func (mapChanBuffer *dataChannelMap) LoadOrStore(path string, channel chan dataChanel) chan dataChanel {
 	actual, _ := mapChanBuffer.syncMap.LoadOrStore(path, channel)
-	return actual.(chan *[]byte)
+	return actual.(chan dataChanel)
 }
 
 type comChannelMap struct {
@@ -25,8 +25,8 @@ type channelMapWrap struct {
 	com  *comChannelMap
 }
 
-func (channel *channelMapWrap) getDataChannel(path string) chan *[]byte {
-	return channel.data.LoadOrStore(path, make(chan *[]byte))
+func (channel *channelMapWrap) getDataChannel(path string) chan dataChanel {
+	return channel.data.LoadOrStore(path, make(chan dataChanel))
 }
 
 func (channel *channelMapWrap) getComChannel(path string) chan struct{} {
