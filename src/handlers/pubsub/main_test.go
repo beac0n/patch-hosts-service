@@ -8,11 +8,12 @@ import (
 )
 
 var pubSubReqHandler = &RequestHandler{maxReqSize: 10}
-var data = `test`
+var testData0 = "test"
+var testData1 = "test2"
 
 func TestServeHttpSingle(test *testing.T) {
 	getRequest, _ := http.NewRequest("GET", "/foobar", nil)
-	postRequest, _ := http.NewRequest("POST", "/foobar", bytes.NewBuffer([]byte(data)))
+	postRequest, _ := http.NewRequest("POST", "/foobar", bytes.NewBuffer([]byte(testData0)))
 
 	requestHandler := http.HandlerFunc(pubSubReqHandler.ServeHttp)
 
@@ -21,12 +22,35 @@ func TestServeHttpSingle(test *testing.T) {
 	go sendRequest(requestHandler, getRequest, requestRecorderChan)
 
 	assertRequest("", sendRequestSync(requestHandler, postRequest), test)
-	assertRequest(data, <-requestRecorderChan, test)
+	assertRequest(testData0, <-requestRecorderChan, test)
 }
+
+func TestServeHttpSingleParallel(test *testing.T) {
+	getRequest0, _ := http.NewRequest("GET", "/foobar", nil)
+	postRequest0, _ := http.NewRequest("POST", "/foobar", bytes.NewBuffer([]byte(testData0)))
+
+	getRequest1, _ := http.NewRequest("GET", "/barfoo", nil)
+	postRequest1, _ := http.NewRequest("POST", "/barfoo", bytes.NewBuffer([]byte(testData1)))
+
+	requestHandler := http.HandlerFunc(pubSubReqHandler.ServeHttp)
+
+	requestRecorderChan0 := make(chan *httptest.ResponseRecorder)
+	requestRecorderChan1 := make(chan *httptest.ResponseRecorder)
+
+	go sendRequest(requestHandler, getRequest0, requestRecorderChan0)
+	go sendRequest(requestHandler, getRequest1, requestRecorderChan1)
+
+	assertRequest("", sendRequestSync(requestHandler, postRequest0), test)
+	assertRequest(testData0, <-requestRecorderChan0, test)
+
+	assertRequest("", sendRequestSync(requestHandler, postRequest1), test)
+	assertRequest(testData1, <-requestRecorderChan1, test)
+}
+
 
 func TestServeHttpMulti(test *testing.T) {
 	getRequest, _ := http.NewRequest("GET", "/foobar?pubsub=true", nil)
-	postRequest, _ := http.NewRequest("POST", "/foobar?pubsub=true", bytes.NewBuffer([]byte(data)))
+	postRequest, _ := http.NewRequest("POST", "/foobar?pubsub=true", bytes.NewBuffer([]byte(testData0)))
 
 	requestHandler := http.HandlerFunc(pubSubReqHandler.ServeHttp)
 
@@ -43,7 +67,7 @@ func TestServeHttpMulti(test *testing.T) {
 	assertRequest("", requestRecorderPost, test)
 
 	for i := 0; i < numberOfGetRequest; i++ {
-		assertRequest(data, <-requestRecorderChan, test)
+		assertRequest(testData0, <-requestRecorderChan, test)
 	}
 }
 
