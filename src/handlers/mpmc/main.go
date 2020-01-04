@@ -26,6 +26,6 @@ func (requestHandler *RequestHandler) ServeHttp(responseWriter http.ResponseWrit
 	if request.Method == http.MethodPost {
 		requestHandler.produce(request, responseWriter, dataChannel)
 	} else if request.Method == http.MethodGet {
-		requestHandler.consume(dataChannel, responseWriter, request)
+		requestHandler.consume(request, responseWriter, dataChannel)
 	}
 }

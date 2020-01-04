@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-func (requestHandler *RequestHandler) consume(dataChannel chan *[]byte, responseWriter http.ResponseWriter, request *http.Request) {
+func (requestHandler *RequestHandler) consume(request *http.Request, responseWriter http.ResponseWriter, dataChannel chan *[]byte) {
 	select {
 	case bytes := <-dataChannel:
 		responseWriter.Header().Set("Content-Length", strconv.Itoa(len(*bytes)))

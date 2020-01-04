@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func (requestHandler *RequestHandler) produce(request *http.Request, responseWriter http.ResponseWriter, comChannel chan struct{}, dataChannel chan *[]byte) {
+func (requestHandler *RequestHandler) produce(request *http.Request, responseWriter http.ResponseWriter, dataChannel chan *[]byte, comChannel chan struct{}) {
 	if request.ContentLength <= 0 {
 		http.Error(responseWriter, "no content", http.StatusBadRequest)
 		return

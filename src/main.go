@@ -15,8 +15,6 @@ type RequestHandler struct {
 }
 
 func (requestHandler *RequestHandler) ServeHTTP(responseWriter http.ResponseWriter, request *http.Request) {
-	log.Println(request.URL, )
-
 	if isCorrectPath(request, "/pubsub") {
 		requestHandler.pubSubRequestHandler.ServeHttp(responseWriter, request)
 		return

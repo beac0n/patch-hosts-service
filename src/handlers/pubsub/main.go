@@ -1,6 +1,7 @@
 package pubsub
 
 import (
+	"math"
 	"net/http"
 	"sync"
 )
@@ -21,15 +22,26 @@ func (requestHandler *RequestHandler) ServeHttp(responseWriter http.ResponseWrit
 		return
 	}
 
-	dataChannelI, _ := requestHandler.dataChannelMap.LoadOrStore(request.URL.Path, make(chan *[]byte))
+	persistKeys, persistOk := request.URL.Query()["persist"]
+	persist := persistOk && len(persistKeys) == 1 && persistKeys[0] == "true"
+
+	if _, dataChannelOk := requestHandler.dataChannelMap.Load(request.URL.Path); !dataChannelOk {
+		requestHandler.dataChannelMap.Store(request.URL.Path, make(chan *[]byte))
+	}
+
+	dataChannelI, _ := requestHandler.dataChannelMap.Load(request.URL.Path)
 	dataChannel := dataChannelI.(chan *[]byte)
 
-	comChannelI, _ := requestHandler.comChannelMap.LoadOrStore(request.URL.Path, make(chan struct{}, 100))
+	if _, comChannelOk := requestHandler.comChannelMap.Load(request.URL.Path); !comChannelOk {
+		requestHandler.comChannelMap.Store(request.URL.Path, make(chan struct{}, math.MaxInt64))
+	}
+
+	comChannelI, _ := requestHandler.comChannelMap.Load(request.URL.Path)
 	comChannel := comChannelI.(chan struct{})
 
 	if request.Method == http.MethodPost {
-		requestHandler.produce(request, responseWriter, comChannel, dataChannel)
+		requestHandler.produce(request, responseWriter, dataChannel, comChannel)
 	} else if request.Method == http.MethodGet {
-		requestHandler.consume(comChannel, dataChannel, responseWriter, request)
+		requestHandler.consume(request, responseWriter, dataChannel, comChannel, persist)
 	}
 }

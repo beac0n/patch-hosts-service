@@ -6,9 +6,35 @@ import (
 	"strconv"
 )
 
-func (requestHandler *RequestHandler) consume(comChannel chan struct{}, dataChannel chan *[]byte, responseWriter http.ResponseWriter, request *http.Request) {
+func (requestHandler *RequestHandler) consume(request *http.Request, responseWriter http.ResponseWriter, dataChannel chan *[]byte, comChannel chan struct{}, persist bool) {
 	comChannel <- struct{}{}
 
+	if persist {
+		requestHandler.consumePersist(dataChannel, comChannel, responseWriter, request)
+	} else {
+		requestHandler.consumeNormal(dataChannel, comChannel, responseWriter, request)
+	}
+}
+
+func (requestHandler *RequestHandler) consumePersist(dataChannel chan *[]byte, comChannel chan struct{}, responseWriter http.ResponseWriter, request *http.Request) {
+	for {
+		select {
+		case bytes := <-dataChannel:
+			comChannel <- struct{}{}
+			_, err := responseWriter.Write(*bytes)
+			responseWriter.(http.Flusher).Flush()
+			if utils.LogError(err, request) {
+				return
+			}
+
+		case <-request.Context().Done():
+			<-comChannel
+			return
+		}
+	}
+}
+
+func (requestHandler *RequestHandler) consumeNormal(dataChannel chan *[]byte, comChannel chan struct{}, responseWriter http.ResponseWriter, request *http.Request) {
 	select {
 	case bytes := <-dataChannel:
 		responseWriter.Header().Set("Content-Length", strconv.Itoa(len(*bytes)))
@@ -16,5 +42,6 @@ func (requestHandler *RequestHandler) consume(comChannel chan struct{}, dataChan
 		utils.LogError(err, request)
 
 	case <-request.Context().Done():
+		<-comChannel
 	}
 }
