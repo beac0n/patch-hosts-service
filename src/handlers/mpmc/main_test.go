@@ -1,22 +1,21 @@
-package pubsub
+package mpmc
 
 import (
 	"bytes"
 	"net/http"
 	"net/http/httptest"
-	"sync"
 	"testing"
 )
 
-var pubSubReqHandler = &RequestHandler{maxReqSize: 10, dataChannelMap: &sync.Map{}, comChannelMap: &sync.Map{}}
+var mpmcReqHandler = NewRequestHandler(10)
 var testData0 = "test"
 var testData1 = "test2"
 
-func xTestServeHttpSingle(test *testing.T) {
+func TestServeHttpSingle(test *testing.T) {
 	getRequest, _ := http.NewRequest("GET", "/foobar", nil)
 	postRequest, _ := http.NewRequest("POST", "/foobar", bytes.NewBuffer([]byte(testData0)))
 
-	requestHandler := http.HandlerFunc(pubSubReqHandler.ServeHttp)
+	requestHandler := http.HandlerFunc(mpmcReqHandler.ServeHttp)
 
 	requestRecorderChan := make(chan *httptest.ResponseRecorder)
 
@@ -26,14 +25,14 @@ func xTestServeHttpSingle(test *testing.T) {
 	assertRequest(testData0, <-requestRecorderChan, test)
 }
 
-func xTestServeHttpSingleParallel(test *testing.T) {
+func TestServeHttpSingleParallel(test *testing.T) {
 	getRequest0, _ := http.NewRequest("GET", "/foobar", nil)
 	postRequest0, _ := http.NewRequest("POST", "/foobar", bytes.NewBuffer([]byte(testData0)))
 
 	getRequest1, _ := http.NewRequest("GET", "/barfoo", nil)
 	postRequest1, _ := http.NewRequest("POST", "/barfoo", bytes.NewBuffer([]byte(testData1)))
 
-	requestHandler := http.HandlerFunc(pubSubReqHandler.ServeHttp)
+	requestHandler := http.HandlerFunc(mpmcReqHandler.ServeHttp)
 
 	requestRecorderChan0 := make(chan *httptest.ResponseRecorder)
 	requestRecorderChan1 := make(chan *httptest.ResponseRecorder)
@@ -46,30 +45,6 @@ func xTestServeHttpSingleParallel(test *testing.T) {
 
 	assertRequest("", sendRequestSync(requestHandler, postRequest1), test)
 	assertRequest(testData1, <-requestRecorderChan1, test)
-}
-
-
-func TestServeHttpMulti(test *testing.T) {
-	getRequest, _ := http.NewRequest("GET", "/foobar?pubsub=true", nil)
-	postRequest, _ := http.NewRequest("POST", "/foobar?pubsub=true", bytes.NewBuffer([]byte(testData0)))
-
-	requestHandler := http.HandlerFunc(pubSubReqHandler.ServeHttp)
-
-	numberOfGetRequest := 10000
-
-	requestRecorderChan := make(chan *httptest.ResponseRecorder, numberOfGetRequest)
-
-	for i := 0; i < numberOfGetRequest; i++ {
-		go sendRequest(requestHandler, getRequest, requestRecorderChan)
-	}
-
-	requestRecorderPost := sendRequestSync(requestHandler, postRequest)
-
-	assertRequest("", requestRecorderPost, test)
-
-	for i := 0; i < numberOfGetRequest; i++ {
-		assertRequest(testData0, <-requestRecorderChan, test)
-	}
 }
 
 func sendRequestSync(requestHandler http.HandlerFunc, postRequest *http.Request) *httptest.ResponseRecorder {

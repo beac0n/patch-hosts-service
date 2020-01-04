@@ -1,18 +1,37 @@
 package main
 
 import (
+	"./handlers/mpmc"
 	"./handlers/pubsub"
 	"flag"
 	"log"
 	"net/http"
+	"strings"
 )
 
 type RequestHandler struct {
 	pubSubRequestHandler *pubsub.RequestHandler
+	mpmcRequestHandler   *mpmc.RequestHandler
 }
 
 func (requestHandler *RequestHandler) ServeHTTP(responseWriter http.ResponseWriter, request *http.Request) {
-	requestHandler.pubSubRequestHandler.ServeHttp(responseWriter, request)
+	log.Println(request.URL, )
+
+	if isCorrectPath(request, "/pubsub") {
+		requestHandler.pubSubRequestHandler.ServeHttp(responseWriter, request)
+		return
+	}
+
+	if isCorrectPath(request, "/queue") {
+		requestHandler.mpmcRequestHandler.ServeHttp(responseWriter, request)
+		return
+	}
+
+	http.Error(responseWriter, "", http.StatusNotFound)
+}
+
+func isCorrectPath(request *http.Request, path string) bool {
+	return strings.HasPrefix(request.URL.Path, path) && request.URL.Path != path
 }
 
 func main() {
@@ -23,8 +42,10 @@ func main() {
 
 	log.Println("running on", *host)
 
+	maxReqSize := *maxReqSizeInMb * 1000 * 1000
 	requestHandler := &RequestHandler{
-		pubSubRequestHandler: pubsub.NewRequestHandler(*maxReqSizeInMb * 1000 * 1000),
+		pubSubRequestHandler: pubsub.NewRequestHandler(maxReqSize),
+		mpmcRequestHandler:   mpmc.NewRequestHandler(maxReqSize),
 	}
 
 	if err := http.ListenAndServe(*host, requestHandler); err != nil {
