@@ -6,24 +6,40 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 var pubSubReqHandler = NewRequestHandler(10)
 var testData = "test"
 
-func TestServeHttpMulti(test *testing.T) {
-	getRequest, _ := http.NewRequest("GET", "/pubsub/test", nil)
-	postRequest, _ := http.NewRequest("POST", "/pubsub/test", bytes.NewBuffer([]byte(testData)))
+func TestServeHttpPersist(test *testing.T) {
+	requestHandler := http.HandlerFunc(pubSubReqHandler.ServeHttp)
+	requestRecord := httptest.NewRecorder()
 
+	getRequest, _ := http.NewRequest("GET", "/pubsub/test?persist=true", nil)
+	go requestHandler.ServeHTTP(requestRecord, getRequest)
+
+	postRequest0, _ := http.NewRequest("POST", "/pubsub/test", bytes.NewBuffer([]byte(testData)))
+	assertRequest("", sendRequestSync(requestHandler, postRequest0), test)
+
+	postRequest1, _ := http.NewRequest("POST", "/pubsub/test", bytes.NewBuffer([]byte(testData)))
+	assertRequest("", sendRequestSync(requestHandler, postRequest1), test)
+
+	time.Sleep(time.Millisecond)
+	assertRequest(testData+testData, requestRecord, test)
+}
+
+func TestServeHttpMulti(test *testing.T) {
 	requestHandler := http.HandlerFunc(pubSubReqHandler.ServeHttp)
 
-	numberOfGetRequest := 1000000
+	numberOfGetRequest := 1000
 
 	requestRecorderChan := make(chan *httptest.ResponseRecorder)
 	comChan := make(chan struct{}, numberOfGetRequest)
 
 	log.Println("TestServeHttpMulti", "sending GET reqs", numberOfGetRequest)
 	for i := 0; i < numberOfGetRequest; i++ {
+		getRequest, _ := http.NewRequest("GET", "/pubsub/test", nil)
 		go sendRequest(requestHandler, getRequest, requestRecorderChan, comChan)
 	}
 
@@ -35,6 +51,7 @@ func TestServeHttpMulti(test *testing.T) {
 	}
 
 	log.Println("TestServeHttpMulti", "sending POST req")
+	postRequest, _ := http.NewRequest("POST", "/pubsub/test", bytes.NewBuffer([]byte(testData)))
 	requestRecorderPost := sendRequestSync(requestHandler, postRequest)
 
 	if !assertRequest("", requestRecorderPost, test) {
@@ -50,9 +67,21 @@ func TestServeHttpMulti(test *testing.T) {
 }
 
 func sendRequestSync(requestHandler http.HandlerFunc, postRequest *http.Request) *httptest.ResponseRecorder {
+	time.Sleep(time.Millisecond)
+
 	requestRecorderPost := httptest.NewRecorder()
 	requestHandler.ServeHTTP(requestRecorderPost, postRequest)
 	return requestRecorderPost
+}
+
+func sendRequest(reqHandler http.HandlerFunc, req *http.Request, reqRecChan chan *httptest.ResponseRecorder, comChan chan struct{}) {
+	requestRecord := httptest.NewRecorder()
+
+	comChan <- struct{}{}
+
+	reqHandler.ServeHTTP(requestRecord, req)
+
+	reqRecChan <- requestRecord
 }
 
 func assertRequest(expected string, requestRecorder *httptest.ResponseRecorder, test *testing.T) bool {
@@ -71,14 +100,4 @@ func assertRequest(expected string, requestRecorder *httptest.ResponseRecorder, 
 	}
 
 	return true
-}
-
-func sendRequest(reqHandler http.HandlerFunc, req *http.Request, reqRecChan chan *httptest.ResponseRecorder, comChan chan struct{}) {
-	requestRecord := httptest.NewRecorder()
-
-	comChan <- struct{}{}
-
-	reqHandler.ServeHTTP(requestRecord, req)
-
-	reqRecChan <- requestRecord
 }

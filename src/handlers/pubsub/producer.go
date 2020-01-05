@@ -16,20 +16,17 @@ func (requestHandler *RequestHandler) produce(request *http.Request, responseWri
 		return
 	}
 
-	consumersCount := getConsumerCount(comChannel)
-
-	if consumersCount == 0 {
-		http.Error(responseWriter, "no consumers", http.StatusPreconditionFailed)
-		return
-	}
-
 	bodyBytes, err := ioutil.ReadAll(request.Body)
 
 	if utils.LogError(err, request) {
 		return
 	}
 
-	sendDataToConsumers(consumersCount, &bodyBytes, dataChannel, request)
+	if consumersCount := getConsumerCount(comChannel); consumersCount > 0 {
+		sendDataToConsumers(consumersCount, &bodyBytes, dataChannel, request)
+	} else {
+		http.Error(responseWriter, "no consumers", http.StatusPreconditionFailed)
+	}
 }
 
 func getConsumerCount(comChannel chan struct{}) uint64 {
