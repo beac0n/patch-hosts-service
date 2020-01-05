@@ -4,37 +4,40 @@ import (
 	"../../utils"
 	"io/ioutil"
 	"net/http"
+	"sync"
 )
 
-func (requestHandler *RequestHandler) produce(request *http.Request, responseWriter http.ResponseWriter, dataChannel chan *[]byte, comChannel chan struct{}) {
-	if request.ContentLength <= 0 {
-		http.Error(responseWriter, "no content", http.StatusBadRequest)
+func (reqHandler *RequestHandler) produce(req *http.Request, resWriter http.ResponseWriter, dataChan chan *[]byte, comChan chan struct{}, mux *sync.Mutex) {
+	if req.ContentLength <= 0 {
+		http.Error(resWriter, "no content", http.StatusBadRequest)
 		return
 	}
 
-	if utils.HttpErrorRequestEntityTooLarge(requestHandler.maxReqSize, request, responseWriter) {
+	if utils.HttpErrorRequestEntityTooLarge(reqHandler.maxReqSize, req, resWriter) {
 		return
 	}
 
-	bodyBytes, err := ioutil.ReadAll(request.Body)
+	bodyBytes, err := ioutil.ReadAll(req.Body)
 
-	if utils.LogError(err, request) {
+	if utils.LogError(err, req) {
 		return
 	}
 
-	if consumersCount := getConsumerCount(comChannel); consumersCount > 0 {
-		sendDataToConsumers(consumersCount, &bodyBytes, dataChannel, request)
+	mux.Lock()
+	defer mux.Unlock()
+	if consumersCount := getConsumerCount(comChan); consumersCount > 0 {
+		sendDataToConsumers(consumersCount, &bodyBytes, dataChan, req)
 	} else {
-		http.Error(responseWriter, "no consumers", http.StatusPreconditionFailed)
+		http.Error(resWriter, "no consumers", http.StatusPreconditionFailed)
 	}
 }
 
-func getConsumerCount(comChannel chan struct{}) uint64 {
+func getConsumerCount(comChan chan struct{}) uint64 {
 	consumersCount := uint64(0)
 
 	for {
 		select {
-		case <-comChannel:
+		case <-comChan:
 			consumersCount++
 		default:
 			return consumersCount
@@ -42,11 +45,11 @@ func getConsumerCount(comChannel chan struct{}) uint64 {
 	}
 }
 
-func sendDataToConsumers(consumersCount uint64, bodyBytes *[]byte, dataChannel chan *[]byte, request *http.Request) {
+func sendDataToConsumers(consumersCount uint64, bodyBytes *[]byte, dataChan chan *[]byte, req *http.Request) {
 	for ; consumersCount > 0; consumersCount-- {
 		select {
-		case dataChannel <- bodyBytes:
-		case <-request.Context().Done():
+		case dataChan <- bodyBytes:
+		case <-req.Context().Done():
 			return
 		}
 	}

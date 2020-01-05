@@ -1,47 +1,44 @@
 package pubsub
 
 import (
+	"../../utils"
 	"math"
 	"net/http"
 	"sync"
 )
 
 type RequestHandler struct {
-	maxReqSize     int64
-	dataChannelMap *sync.Map
-	comChannelMap  *sync.Map
+	maxReqSize  int64
+	dataChanMap *sync.Map
+	comChanMap  *sync.Map
+	muxMap      *sync.Map
 }
 
 func NewRequestHandler(maxReqSize int64) *RequestHandler {
-	return &RequestHandler{maxReqSize: maxReqSize, dataChannelMap: &sync.Map{}, comChannelMap: &sync.Map{}}
+	return &RequestHandler{maxReqSize, &sync.Map{}, &sync.Map{}, &sync.Map{}}
 }
 
-func (requestHandler *RequestHandler) ServeHttp(responseWriter http.ResponseWriter, request *http.Request) {
-	if (request.Method != http.MethodGet) && (request.Method != http.MethodPost) {
-		http.Error(responseWriter, "wrong http method", http.StatusBadRequest)
+func (reqHandler *RequestHandler) ServeHttp(resWriter http.ResponseWriter, req *http.Request) {
+	if (req.Method != http.MethodGet) && (req.Method != http.MethodPost) {
+		http.Error(resWriter, "wrong http method", http.StatusBadRequest)
 		return
 	}
 
-	persistKeys, persistOk := request.URL.Query()["persist"]
+	persistKeys, persistOk := req.URL.Query()["persist"]
 	persist := persistOk && len(persistKeys) == 1 && persistKeys[0] == "true"
 
-	if _, dataChannelOk := requestHandler.dataChannelMap.Load(request.URL.Path); !dataChannelOk {
-		requestHandler.dataChannelMap.Store(request.URL.Path, make(chan *[]byte))
-	}
+	dataChanCreator := func() interface{} { return make(chan *[]byte) }
+	dataChan :=  utils.LoadAndStore(reqHandler.dataChanMap, req.URL.Path, dataChanCreator).(chan *[]byte)
 
-	dataChannelI, _ := requestHandler.dataChannelMap.Load(request.URL.Path)
-	dataChannel := dataChannelI.(chan *[]byte)
+	comChanCreator := func() interface{} { return make(chan struct{}, math.MaxInt64) }
+	comChan :=  utils.LoadAndStore(reqHandler.comChanMap, req.URL.Path, comChanCreator).(chan struct{})
 
-	if _, comChannelOk := requestHandler.comChannelMap.Load(request.URL.Path); !comChannelOk {
-		requestHandler.comChannelMap.Store(request.URL.Path, make(chan struct{}, math.MaxInt64))
-	}
+	muxCreator := func() interface{} { return &sync.Mutex{} }
+	mux := utils.LoadAndStore(reqHandler.muxMap, req.URL.Path, muxCreator).(*sync.Mutex)
 
-	comChannelI, _ := requestHandler.comChannelMap.Load(request.URL.Path)
-	comChannel := comChannelI.(chan struct{})
-
-	if request.Method == http.MethodPost {
-		requestHandler.produce(request, responseWriter, dataChannel, comChannel)
-	} else if request.Method == http.MethodGet {
-		requestHandler.consume(request, responseWriter, dataChannel, comChannel, persist)
+	if req.Method == http.MethodPost {
+		reqHandler.produce(req, resWriter, dataChan, comChan, mux)
+	} else if req.Method == http.MethodGet {
+		reqHandler.consume(req, resWriter, dataChan, comChan, persist)
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"runtime/debug"
 	"strconv"
+	"sync"
 )
 
 func LogError(err error, request *http.Request) bool {
@@ -30,4 +31,13 @@ func HttpErrorRequestEntityTooLarge(maxReqSize int64, request *http.Request, res
 	http.Error(responseWriter, errorMsg, http.StatusRequestEntityTooLarge)
 
 	return true
+}
+
+func LoadAndStore(syncMap *sync.Map, key string, channelCreator func() interface{}) interface{} {
+	if _, dataChannelOk := syncMap.Load(key); !dataChannelOk {
+		syncMap.Store(key, channelCreator())
+	}
+
+	dataChannelI, _ := syncMap.Load(key)
+	return dataChannelI
 }

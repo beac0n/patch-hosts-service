@@ -5,25 +5,25 @@ import (
 	"net/http"
 )
 
-func (requestHandler *RequestHandler) consume(request *http.Request, responseWriter http.ResponseWriter, dataChannel chan *[]byte, comChannel chan struct{}, persist bool) {
-	comChannel <- struct{}{}
+func (reqHandler *RequestHandler) consume(req *http.Request, resWriter http.ResponseWriter, dataChan chan *[]byte, comChan chan struct{}, persist bool) {
+	comChan <- struct{}{}
 
 	for {
 		select {
-		case bytes := <-dataChannel:
+		case bytes := <-dataChan:
 			if persist {
-				comChannel <- struct{}{}
+				comChan <- struct{}{}
 			}
 
-			_, err := responseWriter.Write(*bytes)
-			responseWriter.(http.Flusher).Flush()
+			_, err := resWriter.Write(*bytes)
+			resWriter.(http.Flusher).Flush()
 
-			if utils.LogError(err, request) || !persist {
+			if utils.LogError(err, req) || !persist {
 				return
 			}
 
-		case <-request.Context().Done():
-			<-comChannel
+		case <-req.Context().Done():
+			<-comChan
 			return
 		}
 	}

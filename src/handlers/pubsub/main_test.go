@@ -67,6 +67,7 @@ func TestServeHttpMulti(test *testing.T) {
 }
 
 func sendRequestSync(requestHandler http.HandlerFunc, postRequest *http.Request) *httptest.ResponseRecorder {
+	// we need to wait a minimum amount of time, or else requests will be faster than writing to channel
 	time.Sleep(time.Millisecond)
 
 	requestRecorderPost := httptest.NewRecorder()

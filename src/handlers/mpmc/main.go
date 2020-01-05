@@ -1,31 +1,32 @@
 package mpmc
 
 import (
+	"../../utils"
 	"net/http"
 	"sync"
 )
 
 type RequestHandler struct {
-	maxReqSize     int64
-	dataChannelMap *sync.Map
+	maxReqSize  int64
+	dataChanMap *sync.Map
 }
 
 func NewRequestHandler(maxReqSize int64) *RequestHandler {
-	return &RequestHandler{maxReqSize: maxReqSize, dataChannelMap: &sync.Map{}}
+	return &RequestHandler{maxReqSize: maxReqSize, dataChanMap: &sync.Map{}}
 }
 
-func (requestHandler *RequestHandler) ServeHttp(responseWriter http.ResponseWriter, request *http.Request) {
-	if (request.Method != http.MethodGet) && (request.Method != http.MethodPost) {
-		http.Error(responseWriter, "wrong http method", http.StatusBadRequest)
+func (reqHandler *RequestHandler) ServeHttp(resWriter http.ResponseWriter, req *http.Request) {
+	if (req.Method != http.MethodGet) && (req.Method != http.MethodPost) {
+		http.Error(resWriter, "wrong http method", http.StatusBadRequest)
 		return
 	}
 
-	dataChannelI, _ := requestHandler.dataChannelMap.LoadOrStore(request.URL.Path, make(chan *[]byte))
-	dataChannel := dataChannelI.(chan *[]byte)
+	dataChanCreator := func() interface{} { return make(chan *[]byte) }
+	dataChan := utils.LoadAndStore(reqHandler.dataChanMap, req.URL.Path, dataChanCreator).(chan *[]byte)
 
-	if request.Method == http.MethodPost {
-		requestHandler.produce(request, responseWriter, dataChannel)
-	} else if request.Method == http.MethodGet {
-		requestHandler.consume(request, responseWriter, dataChannel)
+	if req.Method == http.MethodPost {
+		reqHandler.produce(req, resWriter, dataChan)
+	} else if req.Method == http.MethodGet {
+		reqHandler.consume(req, resWriter, dataChan)
 	}
 }

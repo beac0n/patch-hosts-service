@@ -6,25 +6,25 @@ import (
 	"net/http"
 )
 
-func (requestHandler *RequestHandler) produce(request *http.Request, responseWriter http.ResponseWriter, dataChannel chan *[]byte) {
-	if request.ContentLength <= 0 {
-		http.Error(responseWriter, "no content", http.StatusBadRequest)
+func (reqHandler *RequestHandler) produce(req *http.Request, resWriter http.ResponseWriter, dataChan chan *[]byte) {
+	if req.ContentLength <= 0 {
+		http.Error(resWriter, "no content", http.StatusBadRequest)
 		return
 	}
 
-	if utils.HttpErrorRequestEntityTooLarge(requestHandler.maxReqSize, request, responseWriter) {
+	if utils.HttpErrorRequestEntityTooLarge(reqHandler.maxReqSize, req, resWriter) {
 		return
 	}
 
-	bodyBytes, err := ioutil.ReadAll(request.Body)
+	bodyBytes, err := ioutil.ReadAll(req.Body)
 
-	if utils.LogError(err, request) {
+	if utils.LogError(err, req) {
 		return
 	}
 
 	select {
-	case dataChannel <- &bodyBytes:
-	case <-request.Context().Done():
+	case dataChan <- &bodyBytes:
+	case <-req.Context().Done():
 	}
 
 }

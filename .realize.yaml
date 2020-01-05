@@ -1,6 +1,6 @@
 settings:
   legacy:
-    force: false
+    force: true
     interval: 0s
 schema:
 - name: patchbay-simple-server
@@ -21,3 +21,8 @@ schema:
     - .git
     - .realize
     - vendor
+    scripts:
+      - type: after
+        command: go test -v ./...
+        output: true
+        global: false

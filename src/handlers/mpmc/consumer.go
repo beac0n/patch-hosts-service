@@ -6,13 +6,13 @@ import (
 	"strconv"
 )
 
-func (requestHandler *RequestHandler) consume(request *http.Request, responseWriter http.ResponseWriter, dataChannel chan *[]byte) {
+func (reqHandler *RequestHandler) consume(req *http.Request, resWriter http.ResponseWriter, dataChan chan *[]byte) {
 	select {
-	case bytes := <-dataChannel:
-		responseWriter.Header().Set("Content-Length", strconv.Itoa(len(*bytes)))
-		_, err := responseWriter.Write(*bytes)
-		utils.LogError(err, request)
+	case bytes := <-dataChan:
+		resWriter.Header().Set("Content-Length", strconv.Itoa(len(*bytes)))
+		_, err := resWriter.Write(*bytes)
+		utils.LogError(err, req)
 
-	case <-request.Context().Done():
+	case <-req.Context().Done():
 	}
 }
