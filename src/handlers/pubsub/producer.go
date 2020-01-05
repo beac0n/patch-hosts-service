@@ -23,6 +23,7 @@ func (reqHandler *RequestHandler) produce(req *http.Request, resWriter http.Resp
 		return
 	}
 
+	// only one producer is allowed to send to the currently listening consumers
 	mux.Lock()
 	defer mux.Unlock()
 	if consumersCount := getConsumerCount(comChan); consumersCount > 0 {
