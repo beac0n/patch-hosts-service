@@ -16,8 +16,7 @@ func NewReqHandler(maxReqSize int64) *ReqHandler {
 }
 
 func (reqHandler *ReqHandler) ServeHTTP(resWriter http.ResponseWriter, req *http.Request) {
-	if (req.Method != http.MethodGet) && (req.Method != http.MethodPost) {
-		http.Error(resWriter, "wrong http method", http.StatusBadRequest)
+	if utils.NotGetOrPost(req, resWriter) {
 		return
 	}
 

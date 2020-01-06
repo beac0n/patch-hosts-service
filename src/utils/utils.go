@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"../constants"
 	"log"
 	"net/http"
 	"runtime/debug"
@@ -17,7 +18,6 @@ func LogError(err error, request *http.Request) bool {
 	debug.PrintStack()
 
 	return true
-
 }
 
 func HttpErrorRequestEntityTooLarge(maxReqSize int64, request *http.Request, responseWriter http.ResponseWriter) bool {
@@ -40,4 +40,13 @@ func LoadAndStore(syncMap *sync.Map, key string, channelCreator func() interface
 
 	dataChannelI, _ := syncMap.Load(key)
 	return dataChannelI
+}
+
+func NotGetOrPost(req *http.Request, resWriter http.ResponseWriter) bool {
+	if (req.Method != http.MethodGet) && (req.Method != http.MethodPost) {
+		http.Error(resWriter, constants.WrongHttpMethod, http.StatusBadRequest)
+		return true
+	}
+
+	return false
 }

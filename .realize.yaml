@@ -24,5 +24,4 @@ schema:
     scripts:
       - type: after
         command: go test -v ./...
-        output: true
         global: false

@@ -1,6 +1,7 @@
 package mpmc
 
 import (
+	"../../constants"
 	"../../utils"
 	"io/ioutil"
 	"net/http"
@@ -8,7 +9,7 @@ import (
 
 func (reqHandler *ReqHandler) produce(req *http.Request, resWriter http.ResponseWriter, dataChan chan *[]byte) {
 	if req.ContentLength <= 0 {
-		http.Error(resWriter, "no content", http.StatusBadRequest)
+		http.Error(resWriter, constants.NoContent, http.StatusBadRequest)
 		return
 	}
 

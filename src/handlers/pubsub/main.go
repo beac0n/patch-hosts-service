@@ -19,8 +19,7 @@ func NewReqHandler(maxReqSize int64) *ReqHandler {
 }
 
 func (reqHandler *ReqHandler) ServeHTTP(resWriter http.ResponseWriter, req *http.Request) {
-	if (req.Method != http.MethodGet) && (req.Method != http.MethodPost) {
-		http.Error(resWriter, "wrong http method", http.StatusBadRequest)
+	if utils.NotGetOrPost(req, resWriter) {
 		return
 	}
 
@@ -28,10 +27,10 @@ func (reqHandler *ReqHandler) ServeHTTP(resWriter http.ResponseWriter, req *http
 	persist := persistOk && len(persistKeys) == 1 && persistKeys[0] == "true"
 
 	dataChanCreator := func() interface{} { return make(chan *[]byte) }
-	dataChan :=  utils.LoadAndStore(reqHandler.dataChanMap, req.URL.Path, dataChanCreator).(chan *[]byte)
+	dataChan := utils.LoadAndStore(reqHandler.dataChanMap, req.URL.Path, dataChanCreator).(chan *[]byte)
 
 	comChanCreator := func() interface{} { return make(chan struct{}, math.MaxInt64) }
-	comChan :=  utils.LoadAndStore(reqHandler.comChanMap, req.URL.Path, comChanCreator).(chan struct{})
+	comChan := utils.LoadAndStore(reqHandler.comChanMap, req.URL.Path, comChanCreator).(chan struct{})
 
 	muxCreator := func() interface{} { return &sync.Mutex{} }
 	mux := utils.LoadAndStore(reqHandler.muxMap, req.URL.Path, muxCreator).(*sync.Mutex)
@@ -42,3 +41,4 @@ func (reqHandler *ReqHandler) ServeHTTP(resWriter http.ResponseWriter, req *http
 		reqHandler.consume(req, resWriter, dataChan, comChan, persist)
 	}
 }
+
