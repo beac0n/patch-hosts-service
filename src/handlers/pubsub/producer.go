@@ -7,7 +7,7 @@ import (
 	"sync"
 )
 
-func (reqHandler *RequestHandler) produce(req *http.Request, resWriter http.ResponseWriter, dataChan chan *[]byte, comChan chan struct{}, mux *sync.Mutex) {
+func (reqHandler *ReqHandler) produce(req *http.Request, resWriter http.ResponseWriter, dataChan chan *[]byte, comChan chan struct{}, mux *sync.Mutex) {
 	if req.ContentLength <= 0 {
 		http.Error(resWriter, "no content", http.StatusBadRequest)
 		return

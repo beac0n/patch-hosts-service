@@ -9,11 +9,11 @@ import (
 	"time"
 )
 
-var pubSubReqHandler = NewRequestHandler(10)
+var pubSubReqHandler = NewReqHandler(10)
 var testData = "test"
 
 func TestServeHttpPersist(test *testing.T) {
-	requestHandler := http.HandlerFunc(pubSubReqHandler.ServeHttp)
+	requestHandler := http.HandlerFunc(pubSubReqHandler.ServeHTTP)
 	requestRecord := httptest.NewRecorder()
 
 	getRequest, _ := http.NewRequest("GET", "/pubsub/test?persist=true", nil)
@@ -30,7 +30,7 @@ func TestServeHttpPersist(test *testing.T) {
 }
 
 func TestServeHttpMulti(test *testing.T) {
-	requestHandler := http.HandlerFunc(pubSubReqHandler.ServeHttp)
+	requestHandler := http.HandlerFunc(pubSubReqHandler.ServeHTTP)
 
 	numberOfGetRequest := 1000
 

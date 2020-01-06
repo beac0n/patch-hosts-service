@@ -9,23 +9,23 @@ import (
 	"strings"
 )
 
-type RequestHandler struct {
-	pubSubRequestHandler *pubsub.RequestHandler
-	mpmcRequestHandler   *mpmc.RequestHandler
+type ReqHandler struct {
+	pubSubReqHandler *pubsub.ReqHandler
+	mpmcReqHandler   *mpmc.ReqHandler
 }
 
-func (requestHandler *RequestHandler) ServeHTTP(responseWriter http.ResponseWriter, request *http.Request) {
-	if isCorrectPath(request, "/pubsub") {
-		requestHandler.pubSubRequestHandler.ServeHttp(responseWriter, request)
+func (reqHandler *ReqHandler) ServeHTTP(resWriter http.ResponseWriter, req *http.Request) {
+	if isCorrectPath(req, "/pubsub") {
+		reqHandler.pubSubReqHandler.ServeHTTP(resWriter, req)
 		return
 	}
 
-	if isCorrectPath(request, "/queue") {
-		requestHandler.mpmcRequestHandler.ServeHttp(responseWriter, request)
+	if isCorrectPath(req, "/queue") {
+		reqHandler.mpmcReqHandler.ServeHTTP(resWriter, req)
 		return
 	}
 
-	http.Error(responseWriter, "", http.StatusNotFound)
+	http.Error(resWriter, "", http.StatusNotFound)
 }
 
 func isCorrectPath(request *http.Request, path string) bool {
@@ -41,12 +41,12 @@ func main() {
 	log.Println("running on", *host)
 
 	maxReqSize := *maxReqSizeInMb * 1000 * 1000
-	requestHandler := &RequestHandler{
-		pubSubRequestHandler: pubsub.NewRequestHandler(maxReqSize),
-		mpmcRequestHandler:   mpmc.NewRequestHandler(maxReqSize),
+	reqHandler := &ReqHandler{
+		pubSubReqHandler: pubsub.NewReqHandler(maxReqSize),
+		mpmcReqHandler:   mpmc.NewReqHandler(maxReqSize),
 	}
 
-	if err := http.ListenAndServe(*host, requestHandler); err != nil {
+	if err := http.ListenAndServe(*host, reqHandler); err != nil {
 		log.Fatal("FATAL ERROR:", err)
 	}
 }

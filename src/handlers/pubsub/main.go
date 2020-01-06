@@ -7,18 +7,18 @@ import (
 	"sync"
 )
 
-type RequestHandler struct {
+type ReqHandler struct {
 	maxReqSize  int64
 	dataChanMap *sync.Map
 	comChanMap  *sync.Map
 	muxMap      *sync.Map
 }
 
-func NewRequestHandler(maxReqSize int64) *RequestHandler {
-	return &RequestHandler{maxReqSize, &sync.Map{}, &sync.Map{}, &sync.Map{}}
+func NewReqHandler(maxReqSize int64) *ReqHandler {
+	return &ReqHandler{maxReqSize, &sync.Map{}, &sync.Map{}, &sync.Map{}}
 }
 
-func (reqHandler *RequestHandler) ServeHttp(resWriter http.ResponseWriter, req *http.Request) {
+func (reqHandler *ReqHandler) ServeHTTP(resWriter http.ResponseWriter, req *http.Request) {
 	if (req.Method != http.MethodGet) && (req.Method != http.MethodPost) {
 		http.Error(resWriter, "wrong http method", http.StatusBadRequest)
 		return

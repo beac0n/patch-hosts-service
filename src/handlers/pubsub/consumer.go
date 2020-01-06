@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func (reqHandler *RequestHandler) consume(req *http.Request, resWriter http.ResponseWriter, dataChan chan *[]byte, comChan chan struct{}, persist bool) {
+func (reqHandler *ReqHandler) consume(req *http.Request, resWriter http.ResponseWriter, dataChan chan *[]byte, comChan chan struct{}, persist bool) {
 	comChan <- struct{}{}
 
 	for {

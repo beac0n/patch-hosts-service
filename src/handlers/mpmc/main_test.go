@@ -7,53 +7,53 @@ import (
 	"testing"
 )
 
-var mpmcReqHandler = NewRequestHandler(10)
+var mpmcReqHandler = NewReqHandler(10)
 var testData0 = "test"
 var testData1 = "test2"
 
 func TestServeHttpSingle(test *testing.T) {
-	getRequest, _ := http.NewRequest("GET", "/foobar", nil)
-	postRequest, _ := http.NewRequest("POST", "/foobar", bytes.NewBuffer([]byte(testData0)))
+	getReq, _ := http.NewRequest("GET", "/foobar", nil)
+	postReq, _ := http.NewRequest("POST", "/foobar", bytes.NewBuffer([]byte(testData0)))
 
-	requestHandler := http.HandlerFunc(mpmcReqHandler.ServeHttp)
+	reqHandler := http.HandlerFunc(mpmcReqHandler.ServeHTTP)
 
-	requestRecorderChan := make(chan *httptest.ResponseRecorder)
+	reqRecChan := make(chan *httptest.ResponseRecorder)
 
-	go sendRequest(requestHandler, getRequest, requestRecorderChan)
+	go sendReq(reqHandler, getReq, reqRecChan)
 
-	assertRequest("", sendRequestSync(requestHandler, postRequest), test)
-	assertRequest(testData0, <-requestRecorderChan, test)
+	assertReq("", sendReqSync(reqHandler, postReq), test)
+	assertReq(testData0, <-reqRecChan, test)
 }
 
 func TestServeHttpSingleParallel(test *testing.T) {
-	getRequest0, _ := http.NewRequest("GET", "/foobar", nil)
-	postRequest0, _ := http.NewRequest("POST", "/foobar", bytes.NewBuffer([]byte(testData0)))
+	getReq0, _ := http.NewRequest("GET", "/foobar", nil)
+	postReq0, _ := http.NewRequest("POST", "/foobar", bytes.NewBuffer([]byte(testData0)))
 
-	getRequest1, _ := http.NewRequest("GET", "/barfoo", nil)
-	postRequest1, _ := http.NewRequest("POST", "/barfoo", bytes.NewBuffer([]byte(testData1)))
+	getReq1, _ := http.NewRequest("GET", "/barfoo", nil)
+	postReq1, _ := http.NewRequest("POST", "/barfoo", bytes.NewBuffer([]byte(testData1)))
 
-	requestHandler := http.HandlerFunc(mpmcReqHandler.ServeHttp)
+	reqHandler := http.HandlerFunc(mpmcReqHandler.ServeHTTP)
 
-	requestRecorderChan0 := make(chan *httptest.ResponseRecorder)
-	requestRecorderChan1 := make(chan *httptest.ResponseRecorder)
+	reqRecChan0 := make(chan *httptest.ResponseRecorder)
+	reqRecChan1 := make(chan *httptest.ResponseRecorder)
 
-	go sendRequest(requestHandler, getRequest0, requestRecorderChan0)
-	go sendRequest(requestHandler, getRequest1, requestRecorderChan1)
+	go sendReq(reqHandler, getReq0, reqRecChan0)
+	go sendReq(reqHandler, getReq1, reqRecChan1)
 
-	assertRequest("", sendRequestSync(requestHandler, postRequest0), test)
-	assertRequest(testData0, <-requestRecorderChan0, test)
+	assertReq("", sendReqSync(reqHandler, postReq0), test)
+	assertReq(testData0, <-reqRecChan0, test)
 
-	assertRequest("", sendRequestSync(requestHandler, postRequest1), test)
-	assertRequest(testData1, <-requestRecorderChan1, test)
+	assertReq("", sendReqSync(reqHandler, postReq1), test)
+	assertReq(testData1, <-reqRecChan1, test)
 }
 
-func sendRequestSync(requestHandler http.HandlerFunc, postRequest *http.Request) *httptest.ResponseRecorder {
+func sendReqSync(requestHandler http.HandlerFunc, postRequest *http.Request) *httptest.ResponseRecorder {
 	requestRecorderPost := httptest.NewRecorder()
 	requestHandler.ServeHTTP(requestRecorderPost, postRequest)
 	return requestRecorderPost
 }
 
-func assertRequest(expected string, requestRecorder *httptest.ResponseRecorder, test *testing.T) {
+func assertReq(expected string, requestRecorder *httptest.ResponseRecorder, test *testing.T) {
 	if status := requestRecorder.Code; status != http.StatusOK {
 		test.Errorf("response has wrong status code: got %v want %v ", status, http.StatusOK)
 	}
@@ -67,7 +67,7 @@ func assertRequest(expected string, requestRecorder *httptest.ResponseRecorder, 
 	}
 }
 
-func sendRequest(reqHandler http.HandlerFunc, req *http.Request, reqRecChan chan *httptest.ResponseRecorder) {
+func sendReq(reqHandler http.HandlerFunc, req *http.Request, reqRecChan chan *httptest.ResponseRecorder) {
 	requestRecord := httptest.NewRecorder()
 
 	reqHandler.ServeHTTP(requestRecord, req)

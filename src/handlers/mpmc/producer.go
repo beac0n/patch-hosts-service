@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func (reqHandler *RequestHandler) produce(req *http.Request, resWriter http.ResponseWriter, dataChan chan *[]byte) {
+func (reqHandler *ReqHandler) produce(req *http.Request, resWriter http.ResponseWriter, dataChan chan *[]byte) {
 	if req.ContentLength <= 0 {
 		http.Error(resWriter, "no content", http.StatusBadRequest)
 		return
