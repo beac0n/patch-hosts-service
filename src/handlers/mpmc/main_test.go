@@ -12,8 +12,8 @@ var testData0 = "test"
 var testData1 = "test2"
 
 func TestServeHttpSingle(test *testing.T) {
-	getReq, _ := http.NewRequest("GET", "/foobar", nil)
-	postReq, _ := http.NewRequest("POST", "/foobar", bytes.NewBuffer([]byte(testData0)))
+	getReq := httptest.NewRequest("GET", "/foobar", nil)
+	postReq := httptest.NewRequest("POST", "/foobar", bytes.NewBuffer([]byte(testData0)))
 
 	reqHandler := http.HandlerFunc(mpmcReqHandler.ServeHTTP)
 
@@ -26,11 +26,11 @@ func TestServeHttpSingle(test *testing.T) {
 }
 
 func TestServeHttpSingleParallel(test *testing.T) {
-	getReq0, _ := http.NewRequest("GET", "/foobar", nil)
-	postReq0, _ := http.NewRequest("POST", "/foobar", bytes.NewBuffer([]byte(testData0)))
+	getReq0 := httptest.NewRequest("GET", "/foobar", nil)
+	postReq0 := httptest.NewRequest("POST", "/foobar", bytes.NewBuffer([]byte(testData0)))
 
-	getReq1, _ := http.NewRequest("GET", "/barfoo", nil)
-	postReq1, _ := http.NewRequest("POST", "/barfoo", bytes.NewBuffer([]byte(testData1)))
+	getReq1 := httptest.NewRequest("GET", "/barfoo", nil)
+	postReq1 := httptest.NewRequest("POST", "/barfoo", bytes.NewBuffer([]byte(testData1)))
 
 	reqHandler := http.HandlerFunc(mpmcReqHandler.ServeHTTP)
 
