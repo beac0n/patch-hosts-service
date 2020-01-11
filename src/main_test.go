@@ -69,4 +69,3 @@ func TestReqHandler_ServeHTTP404(t *testing.T) {
 
 	utils.Assert(t, resWriter.Code, 404)
 }
-

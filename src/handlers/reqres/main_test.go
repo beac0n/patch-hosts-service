@@ -12,7 +12,7 @@ var reqResReqHandler = NewReqHandler(10)
 var testData0 = "test"
 var testData1 = "test2"
 
-func TestReqHandler_ServeHTTP_GET_GET(t *testing.T) {
+func TestReqHandler_ServeHTTP_GetGet(t *testing.T) {
 	getReq0 := httptest.NewRequest("GET", "/req/foobar", bytes.NewBuffer([]byte(testData0)))
 	getReq1 := httptest.NewRequest("GET", "/res/foobar", bytes.NewBuffer([]byte(testData1)))
 
@@ -25,7 +25,7 @@ func TestReqHandler_ServeHTTP_GET_GET(t *testing.T) {
 	utils.AssertRequest(testData1, <-reqRecChan, t)
 }
 
-func TestReqHandler_ServeHTTP_POST_POST(t *testing.T) {
+func TestReqHandler_ServeHTTP_PostPost(t *testing.T) {
 	postReq0 := httptest.NewRequest("POST", "/req/foobar", bytes.NewBuffer([]byte(testData0)))
 	postReq1 := httptest.NewRequest("POST", "/res/foobar", bytes.NewBuffer([]byte(testData1)))
 
@@ -38,7 +38,7 @@ func TestReqHandler_ServeHTTP_POST_POST(t *testing.T) {
 	utils.AssertRequest(testData1, <-reqRecChan, t)
 }
 
-func TestReqHandler_ServeHTTP_POST_POST_w_extra_header(t *testing.T) {
+func TestReqHandler_ServeHTTP_PostPostWithExtraHeader(t *testing.T) {
 	postReq0 := httptest.NewRequest("POST", "/req/foobar", bytes.NewBuffer([]byte(testData0)))
 	postReq0.Header.Set("foobar", "barfoo")
 
