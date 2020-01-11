@@ -6,3 +6,8 @@ clean:
 	rm -rf build
 run:
 	build/patchbay-server
+cov:
+	go test -coverpkg=./... -cover -coverprofile coverage.html -v ./...
+	go tool cover -html=coverage.html
+test:
+	go test -v ./...
