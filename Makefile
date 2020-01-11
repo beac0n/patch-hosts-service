@@ -1,7 +1,7 @@
 dev:
 	go get github.com/oxequa/realize; realize start
 build:
-	go build -race -o build/patchbay-server src/main.go
+	go build -o build/patchbay-server src/main.go
 clean:
 	rm -rf build
 	rm -f coverage.html

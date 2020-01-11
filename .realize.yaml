@@ -21,7 +21,3 @@ schema:
     - .git
     - .realize
     - vendor
-    scripts:
-      - type: after
-        command: go test -v ./...
-        global: false

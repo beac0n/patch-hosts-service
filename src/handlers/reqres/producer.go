@@ -65,6 +65,7 @@ func getData(dataChan chan *reqData, resWriter http.ResponseWriter, req *http.Re
 
 		resWriter.Header().Set(constants.ContentLength, strconv.Itoa(len(*reqData.data)))
 		_, err := resWriter.Write(*reqData.data)
+		resWriter.(http.Flusher).Flush()
 		utils.LogError(err, req)
 
 	case <-req.Context().Done():

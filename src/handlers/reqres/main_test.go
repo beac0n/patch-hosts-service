@@ -9,40 +9,39 @@ import (
 )
 
 var reqResReqHandler = NewReqHandler(10)
-var testData0 = "test"
-var testData1 = "test2"
+var testData = "test"
 
 func TestReqHandler_ServeHTTP_GetGet(t *testing.T) {
-	getReq0 := httptest.NewRequest("GET", "/req/foobar", bytes.NewBuffer([]byte(testData0)))
-	getReq1 := httptest.NewRequest("GET", "/res/foobar", bytes.NewBuffer([]byte(testData1)))
+	getReq0 := httptest.NewRequest("GET", "/req/foobar", bytes.NewBuffer([]byte(testData)))
+	getReq1 := httptest.NewRequest("GET", "/res/foobar", bytes.NewBuffer([]byte(testData)))
 
 	reqRecChan := make(chan *httptest.ResponseRecorder)
 
 	go utils.SendRequest(reqResReqHandler, getReq0, reqRecChan)
 	go utils.SendRequest(reqResReqHandler, getReq1, reqRecChan)
 
-	utils.AssertRequest(testData0, <-reqRecChan, t)
-	utils.AssertRequest(testData1, <-reqRecChan, t)
+	utils.AssertRequest(testData, <-reqRecChan, t)
+	utils.AssertRequest(testData, <-reqRecChan, t)
 }
 
 func TestReqHandler_ServeHTTP_PostPost(t *testing.T) {
-	postReq0 := httptest.NewRequest("POST", "/req/foobar", bytes.NewBuffer([]byte(testData0)))
-	postReq1 := httptest.NewRequest("POST", "/res/foobar", bytes.NewBuffer([]byte(testData1)))
+	postReq0 := httptest.NewRequest("POST", "/req/foobar", bytes.NewBuffer([]byte(testData)))
+	postReq1 := httptest.NewRequest("POST", "/res/foobar", bytes.NewBuffer([]byte(testData)))
 
 	reqRecChan := make(chan *httptest.ResponseRecorder)
 
 	go utils.SendRequest(reqResReqHandler, postReq0, reqRecChan)
 	go utils.SendRequest(reqResReqHandler, postReq1, reqRecChan)
 
-	utils.AssertRequest(testData0, <-reqRecChan, t)
-	utils.AssertRequest(testData1, <-reqRecChan, t)
+	utils.AssertRequest(testData, <-reqRecChan, t)
+	utils.AssertRequest(testData, <-reqRecChan, t)
 }
 
 func TestReqHandler_ServeHTTP_PostPostWithExtraHeader(t *testing.T) {
-	postReq0 := httptest.NewRequest("POST", "/req/foobar", bytes.NewBuffer([]byte(testData0)))
+	postReq0 := httptest.NewRequest("POST", "/req/foobar", bytes.NewBuffer([]byte(testData)))
 	postReq0.Header.Set("foobar", "barfoo")
 
-	postReq1 := httptest.NewRequest("POST", "/res/foobar", bytes.NewBuffer([]byte(testData1)))
+	postReq1 := httptest.NewRequest("POST", "/res/foobar", bytes.NewBuffer([]byte(testData)))
 	postReq0.Header.Set("barfoo", "foobar")
 
 	reqRecChan := make(chan *httptest.ResponseRecorder)
@@ -52,11 +51,11 @@ func TestReqHandler_ServeHTTP_PostPostWithExtraHeader(t *testing.T) {
 
 	recorderReq0 := <-reqRecChan
 	utils.Assert(t, recorderReq0.Header().Get("X-Phs-0-Foobar"), "barfoo")
-	utils.AssertRequest(testData0, recorderReq0, t)
+	utils.AssertRequest(testData, recorderReq0, t)
 
 	recorderReq1 := <-reqRecChan
 	utils.Assert(t, recorderReq0.Header().Get("X-Phs-0-Barfoo"), "foobar")
-	utils.AssertRequest(testData1, recorderReq1, t)
+	utils.AssertRequest(testData, recorderReq1, t)
 }
 
 func TestReqHandler_ServeHTTP_reqEntityTooLarge(t *testing.T) {
