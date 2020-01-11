@@ -4,6 +4,7 @@ build:
 	go build -race -o build/patchbay-server src/main.go
 clean:
 	rm -rf build
+	rm -f coverage.html
 run:
 	build/patchbay-server
 cov:
