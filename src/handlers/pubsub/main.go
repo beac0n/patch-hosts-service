@@ -14,7 +14,7 @@ type ReqHandler struct {
 	muxMap      *sync.Map
 }
 
-func NewReqHandler(maxReqSize int64) *ReqHandler {
+func NewReqHandler(maxReqSize int64) http.Handler {
 	return &ReqHandler{maxReqSize, &sync.Map{}, &sync.Map{}, &sync.Map{}}
 }
 

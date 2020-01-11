@@ -1,6 +1,7 @@
 package mpmc
 
 import (
+	"../../utils"
 	"bytes"
 	"net/http"
 	"net/http/httptest"
@@ -11,7 +12,7 @@ var mpmcReqHandler = NewReqHandler(10)
 var testData0 = "test"
 var testData1 = "test2"
 
-func TestServeHttpSingle(test *testing.T) {
+func TestServeHttpSingle(t *testing.T) {
 	getReq := httptest.NewRequest("GET", "/foobar", nil)
 	postReq := httptest.NewRequest("POST", "/foobar", bytes.NewBuffer([]byte(testData0)))
 
@@ -19,13 +20,13 @@ func TestServeHttpSingle(test *testing.T) {
 
 	reqRecChan := make(chan *httptest.ResponseRecorder)
 
-	go sendReq(reqHandler, getReq, reqRecChan)
+	go utils.SendRequest(reqHandler, getReq, reqRecChan)
 
-	assertReq("", sendReqSync(reqHandler, postReq), test)
-	assertReq(testData0, <-reqRecChan, test)
+	utils.AssertRequest("", utils.SendRequestSync(reqHandler, postReq), t)
+	utils.AssertRequest(testData0, <-reqRecChan, t)
 }
 
-func TestServeHttpSingleParallel(test *testing.T) {
+func TestServeHttpSingleParallel(t *testing.T) {
 	getReq0 := httptest.NewRequest("GET", "/foobar", nil)
 	postReq0 := httptest.NewRequest("POST", "/foobar", bytes.NewBuffer([]byte(testData0)))
 
@@ -37,40 +38,12 @@ func TestServeHttpSingleParallel(test *testing.T) {
 	reqRecChan0 := make(chan *httptest.ResponseRecorder)
 	reqRecChan1 := make(chan *httptest.ResponseRecorder)
 
-	go sendReq(reqHandler, getReq0, reqRecChan0)
-	go sendReq(reqHandler, getReq1, reqRecChan1)
+	go utils.SendRequest(reqHandler, getReq0, reqRecChan0)
+	go utils.SendRequest(reqHandler, getReq1, reqRecChan1)
 
-	assertReq("", sendReqSync(reqHandler, postReq0), test)
-	assertReq(testData0, <-reqRecChan0, test)
+	utils.AssertRequest("", utils.SendRequestSync(reqHandler, postReq0), t)
+	utils.AssertRequest(testData0, <-reqRecChan0, t)
 
-	assertReq("", sendReqSync(reqHandler, postReq1), test)
-	assertReq(testData1, <-reqRecChan1, test)
-}
-
-func sendReqSync(requestHandler http.HandlerFunc, postRequest *http.Request) *httptest.ResponseRecorder {
-	requestRecorderPost := httptest.NewRecorder()
-	requestHandler.ServeHTTP(requestRecorderPost, postRequest)
-	return requestRecorderPost
-}
-
-func assertReq(expected string, requestRecorder *httptest.ResponseRecorder, test *testing.T) {
-	if status := requestRecorder.Code; status != http.StatusOK {
-		test.Errorf("response has wrong status code: got %v want %v ", status, http.StatusOK)
-	}
-
-	if expected == "" {
-		return
-	}
-
-	if actual := requestRecorder.Body.String(); actual != expected {
-		test.Errorf("response has unexpected body: got %v want %v", actual, expected)
-	}
-}
-
-func sendReq(reqHandler http.HandlerFunc, req *http.Request, reqRecChan chan *httptest.ResponseRecorder) {
-	requestRecord := httptest.NewRecorder()
-
-	reqHandler.ServeHTTP(requestRecord, req)
-
-	reqRecChan <- requestRecord
+	utils.AssertRequest("", utils.SendRequestSync(reqHandler, postReq1), t)
+	utils.AssertRequest(testData1, <-reqRecChan1, t)
 }

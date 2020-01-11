@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"runtime/debug"
 	"strconv"
+	"strings"
 	"sync"
 )
 
@@ -50,3 +51,8 @@ func NotGetOrPost(req *http.Request, resWriter http.ResponseWriter) bool {
 
 	return false
 }
+
+func IsCorrectPath(request *http.Request, path string) bool {
+	return strings.HasPrefix(request.URL.Path, path) && request.URL.Path != path
+}
+

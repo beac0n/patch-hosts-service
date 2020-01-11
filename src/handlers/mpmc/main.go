@@ -11,7 +11,7 @@ type ReqHandler struct {
 	dataChanMap *sync.Map
 }
 
-func NewReqHandler(maxReqSize int64) *ReqHandler {
+func NewReqHandler(maxReqSize int64) http.Handler {
 	return &ReqHandler{maxReqSize: maxReqSize, dataChanMap: &sync.Map{}}
 }
 

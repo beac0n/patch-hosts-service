@@ -18,7 +18,7 @@ type ReqHandler struct {
 	httpMethodDataChannelsMap [len(constants.HttpMethods)]*httpMethodDataChannels
 }
 
-func NewReqHandler(maxReqSize int64) *ReqHandler {
+func NewReqHandler(maxReqSize int64) http.Handler {
 	reqHandler := &ReqHandler{maxReqSize: maxReqSize}
 
 	for i := 0; i < len(constants.HttpMethods); i++ {

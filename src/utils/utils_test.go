@@ -11,54 +11,50 @@ import (
 
 var request = httptest.NewRequest("POST", "/test/path", bytes.NewBuffer([]byte("test_data")))
 
-func TestLogErrorFalse(test *testing.T) {
-	expected := false
-	actual := LogError(nil, request)
-	assert(test, actual, expected)
+func TestLogErrorFalse(t *testing.T) {
+	Assert(t, LogError(nil, request), false)
 }
 
-func TestLogErrorTrue(test *testing.T) {
-	expected := true
-	actual := LogError(errors.New("test error"), request)
-	assert(test, actual, expected)
+func TestLogErrorTrue(t *testing.T) {
+	Assert(t, LogError(errors.New("t error"), request), true)
 }
 
-func TestHttpErrorRequestEntityTooLargeTrue(test *testing.T) {
-	expected := true
-	actual := HttpErrorRequestEntityTooLarge(1, request, httptest.NewRecorder())
-	assert(test, actual, expected)
+func TestHttpErrorRequestEntityTooLargeTrue(t *testing.T) {
+	Assert(t, HttpErrorRequestEntityTooLarge(1, request, httptest.NewRecorder()), true)
 
 }
 
-func TestHttpErrorRequestEntityTooLargeFalse(test *testing.T) {
-	expected := false
-	actual := HttpErrorRequestEntityTooLarge(10000, request, httptest.NewRecorder())
-	assert(test, actual, expected)
+func TestHttpErrorRequestEntityTooLargeFalse(t *testing.T) {
+	Assert(t, HttpErrorRequestEntityTooLarge(10000, request, httptest.NewRecorder()), false)
 }
 
-func TestLoadAndStore(test *testing.T) {
+func TestLoadAndStore(t *testing.T) {
 	key := "test_key"
 	m := &sync.Map{}
 	chanCreator := func() interface{} { return make(chan struct{}) }
 
 	channel := LoadAndStore(m, key, chanCreator)
 
-	expected := reflect.TypeOf(make(chan struct{}))
-	actual := reflect.TypeOf(channel)
-	assert(test, actual, expected)
+	Assert(t, reflect.TypeOf(channel), reflect.TypeOf(make(chan struct{})))
 }
 
-func TestNotGetOrPostTrue(test *testing.T) {
-	putRequest := httptest.NewRequest("PUT", "/test/path", nil)
-	assert(test, NotGetOrPost(putRequest, httptest.NewRecorder()), true)
+func TestNotGetOrPostTrue(t *testing.T) {
+	putRequest := httptest.NewRequest("PUT", "/t/path", nil)
+	Assert(t, NotGetOrPost(putRequest, httptest.NewRecorder()), true)
 }
 
-func TestNotGetOrPostFalse(test *testing.T) {
-	assert(test, NotGetOrPost(request, httptest.NewRecorder()), false)
+func TestNotGetOrPostFalse(t *testing.T) {
+	Assert(t, NotGetOrPost(request, httptest.NewRecorder()), false)
 }
 
-func assert(test *testing.T, actual interface{}, expected interface{}) {
-	if actual != expected {
-		test.Errorf("return value was %v, expected %v", actual, expected)
-	}
+func TestIsCorrectPathTrue(t *testing.T) {
+	Assert(t, IsCorrectPath(request,"/t"), true)
+}
+
+func TestIsCorrectPathFalsePrefix(t *testing.T) {
+	Assert(t, IsCorrectPath(request,"/not-t"), false)
+}
+
+func TestIsCorrectPathFalse(t *testing.T) {
+	Assert(t, IsCorrectPath(request,"/t/path"), false)
 }

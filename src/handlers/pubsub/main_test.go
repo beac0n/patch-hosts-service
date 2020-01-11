@@ -1,6 +1,7 @@
 package pubsub
 
 import (
+	"../../utils"
 	"bytes"
 	"log"
 	"net/http"
@@ -12,24 +13,24 @@ import (
 var pubSubReqHandler = NewReqHandler(10)
 var testData = "test"
 
-func TestServeHttpPersist(test *testing.T) {
+func TestServeHttpPersist(t *testing.T) {
 	requestHandler := http.HandlerFunc(pubSubReqHandler.ServeHTTP)
 	requestRecord := httptest.NewRecorder()
 
-	getRequest := httptest.NewRequest("GET", "/pubsub/test?persist=true", nil)
+	getRequest := httptest.NewRequest("GET", "/pubsub/t?persist=true", nil)
 	go requestHandler.ServeHTTP(requestRecord, getRequest)
 
-	postRequest0 := httptest.NewRequest("POST", "/pubsub/test", bytes.NewBuffer([]byte(testData)))
-	assertRequest("", sendRequestSync(requestHandler, postRequest0), test)
+	postRequest0 := httptest.NewRequest("POST", "/pubsub/t", bytes.NewBuffer([]byte(testData)))
+	utils.AssertRequest("", utils.SendRequestSync(requestHandler, postRequest0), t)
 
-	postRequest1 := httptest.NewRequest("POST", "/pubsub/test", bytes.NewBuffer([]byte(testData)))
-	assertRequest("", sendRequestSync(requestHandler, postRequest1), test)
+	postRequest1 := httptest.NewRequest("POST", "/pubsub/t", bytes.NewBuffer([]byte(testData)))
+	utils.AssertRequest("", utils.SendRequestSync(requestHandler, postRequest1), t)
 
 	time.Sleep(time.Millisecond)
-	assertRequest(testData+testData, requestRecord, test)
+	utils.AssertRequest(testData+testData, requestRecord, t)
 }
 
-func TestServeHttpMulti(test *testing.T) {
+func TestServeHttpMulti(t *testing.T) {
 	requestHandler := http.HandlerFunc(pubSubReqHandler.ServeHTTP)
 
 	numberOfGetRequest := 1000
@@ -39,8 +40,8 @@ func TestServeHttpMulti(test *testing.T) {
 
 	log.Println("TestServeHttpMulti", "sending GET reqs", numberOfGetRequest)
 	for i := 0; i < numberOfGetRequest; i++ {
-		getRequest := httptest.NewRequest("GET", "/pubsub/test", nil)
-		go sendRequest(requestHandler, getRequest, requestRecorderChan, comChan)
+		getRequest := httptest.NewRequest("GET", "/pubsub/t", nil)
+		go utils.SendRequestWithCom(requestHandler, getRequest, requestRecorderChan, comChan)
 	}
 
 	log.Println("TestServeHttpMulti", "waiting for GET reqs to halt")
@@ -51,54 +52,17 @@ func TestServeHttpMulti(test *testing.T) {
 	}
 
 	log.Println("TestServeHttpMulti", "sending POST req")
-	postRequest := httptest.NewRequest("POST", "/pubsub/test", bytes.NewBuffer([]byte(testData)))
-	requestRecorderPost := sendRequestSync(requestHandler, postRequest)
+	postRequest := httptest.NewRequest("POST", "/pubsub/t", bytes.NewBuffer([]byte(testData)))
+	requestRecorderPost := utils.SendRequestSync(requestHandler, postRequest)
 
-	if !assertRequest("", requestRecorderPost, test) {
+	if !utils.AssertRequest("", requestRecorderPost, t) {
 		return
 	}
 
 	log.Println("TestServeHttpMulti", "asserting GET reqs")
 	for i := 0; i < numberOfGetRequest; i++ {
-		if !assertRequest(testData, <-requestRecorderChan, test) {
+		if !utils.AssertRequest(testData, <-requestRecorderChan, t) {
 			return
 		}
 	}
-}
-
-func sendRequestSync(requestHandler http.HandlerFunc, postRequest *http.Request) *httptest.ResponseRecorder {
-	// we need to wait a minimum amount of time, or else requests will be faster than writing to channel
-	time.Sleep(time.Millisecond)
-
-	requestRecorderPost := httptest.NewRecorder()
-	requestHandler.ServeHTTP(requestRecorderPost, postRequest)
-	return requestRecorderPost
-}
-
-func sendRequest(reqHandler http.HandlerFunc, req *http.Request, reqRecChan chan *httptest.ResponseRecorder, comChan chan struct{}) {
-	requestRecord := httptest.NewRecorder()
-
-	comChan <- struct{}{}
-
-	reqHandler.ServeHTTP(requestRecord, req)
-
-	reqRecChan <- requestRecord
-}
-
-func assertRequest(expected string, requestRecorder *httptest.ResponseRecorder, test *testing.T) bool {
-	if status := requestRecorder.Code; status != http.StatusOK {
-		test.Errorf("response has wrong status code: got %v want %v ", status, http.StatusOK)
-		return false
-	}
-
-	if expected == "" {
-		return true
-	}
-
-	if actual := requestRecorder.Body.String(); actual != expected {
-		test.Errorf("response has unexpected body: got %v want %v", actual, expected)
-		return false
-	}
-
-	return true
 }
