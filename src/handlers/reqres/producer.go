@@ -13,6 +13,7 @@ type reqData struct {
 	data   *[]byte
 	header http.Header
 	host   string
+	uri    string
 }
 
 func (reqHandler *ReqHandler) produce(req *http.Request, resWriter http.ResponseWriter, dataChanRes chan *reqData, dataChanReq chan *reqData) {
@@ -46,7 +47,7 @@ func (reqHandler *ReqHandler) getBodyBytes(req *http.Request, resWriter http.Res
 
 func sendData(dataChan chan *reqData, bodyBytes []byte, req *http.Request) {
 	select {
-	case dataChan <- &reqData{data: &bodyBytes, header: req.Header, host: req.Host}:
+	case dataChan <- &reqData{data: &bodyBytes, header: req.Header, host: req.Host, uri: req.RequestURI}:
 	case <-req.Context().Done():
 	}
 }
@@ -55,6 +56,7 @@ func getData(dataChan chan *reqData, resWriter http.ResponseWriter, req *http.Re
 	select {
 	case reqData := <-dataChan:
 		resWriter.Header().Set(constants.HeaderPrefix+"0-host", reqData.host)
+		resWriter.Header().Set(constants.HeaderPrefix+"0-uri", reqData.uri)
 		for key, value := range reqData.header {
 			for index, value := range value {
 				resWriter.Header().Set(constants.HeaderPrefix+strconv.Itoa(index)+"-"+key, value)
