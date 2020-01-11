@@ -11,20 +11,20 @@ import (
 
 var request = httptest.NewRequest("POST", "/test/path", bytes.NewBuffer([]byte("test_data")))
 
-func TestLogErrorFalse(t *testing.T) {
+func TestLogError_false(t *testing.T) {
 	Assert(t, LogError(nil, request), false)
 }
 
-func TestLogErrorTrue(t *testing.T) {
+func TestLogError_true(t *testing.T) {
 	Assert(t, LogError(errors.New("t error"), request), true)
 }
 
-func TestHttpErrorRequestEntityTooLargeTrue(t *testing.T) {
+func TestHttpErrorRequestEntityTooLarge_true(t *testing.T) {
 	Assert(t, HttpErrorRequestEntityTooLarge(1, request, httptest.NewRecorder()), true)
 
 }
 
-func TestHttpErrorRequestEntityTooLargeFalse(t *testing.T) {
+func TestHttpErrorRequestEntityTooLarge_false(t *testing.T) {
 	Assert(t, HttpErrorRequestEntityTooLarge(10000, request, httptest.NewRecorder()), false)
 }
 
@@ -38,23 +38,23 @@ func TestLoadAndStore(t *testing.T) {
 	Assert(t, reflect.TypeOf(channel), reflect.TypeOf(make(chan struct{})))
 }
 
-func TestNotGetOrPostTrue(t *testing.T) {
+func TestNotGetOrPost_true(t *testing.T) {
 	putRequest := httptest.NewRequest("PUT", "/t/path", nil)
 	Assert(t, NotGetOrPost(putRequest, httptest.NewRecorder()), true)
 }
 
-func TestNotGetOrPostFalse(t *testing.T) {
+func TestNotGetOrPost_false(t *testing.T) {
 	Assert(t, NotGetOrPost(request, httptest.NewRecorder()), false)
 }
 
-func TestIsCorrectPathTrue(t *testing.T) {
-	Assert(t, IsCorrectPath(request,"/t"), true)
+func TestIsCorrectPath_true(t *testing.T) {
+	Assert(t, IsCorrectPath(request, "/t"), true)
 }
 
-func TestIsCorrectPathFalsePrefix(t *testing.T) {
-	Assert(t, IsCorrectPath(request,"/not-t"), false)
+func TestIsCorrectPath_falsePrefix(t *testing.T) {
+	Assert(t, IsCorrectPath(request, "/not-t"), false)
 }
 
-func TestIsCorrectPathFalse(t *testing.T) {
-	Assert(t, IsCorrectPath(request,"/t/path"), false)
+func TestIsCorrectPath_false(t *testing.T) {
+	Assert(t, IsCorrectPath(request, "/t/path"), false)
 }
