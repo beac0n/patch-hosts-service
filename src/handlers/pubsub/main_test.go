@@ -16,13 +16,13 @@ func TestServeHttpPersist(test *testing.T) {
 	requestHandler := http.HandlerFunc(pubSubReqHandler.ServeHTTP)
 	requestRecord := httptest.NewRecorder()
 
-	getRequest, _ := http.NewRequest("GET", "/pubsub/test?persist=true", nil)
+	getRequest := httptest.NewRequest("GET", "/pubsub/test?persist=true", nil)
 	go requestHandler.ServeHTTP(requestRecord, getRequest)
 
-	postRequest0, _ := http.NewRequest("POST", "/pubsub/test", bytes.NewBuffer([]byte(testData)))
+	postRequest0 := httptest.NewRequest("POST", "/pubsub/test", bytes.NewBuffer([]byte(testData)))
 	assertRequest("", sendRequestSync(requestHandler, postRequest0), test)
 
-	postRequest1, _ := http.NewRequest("POST", "/pubsub/test", bytes.NewBuffer([]byte(testData)))
+	postRequest1 := httptest.NewRequest("POST", "/pubsub/test", bytes.NewBuffer([]byte(testData)))
 	assertRequest("", sendRequestSync(requestHandler, postRequest1), test)
 
 	time.Sleep(time.Millisecond)
@@ -39,7 +39,7 @@ func TestServeHttpMulti(test *testing.T) {
 
 	log.Println("TestServeHttpMulti", "sending GET reqs", numberOfGetRequest)
 	for i := 0; i < numberOfGetRequest; i++ {
-		getRequest, _ := http.NewRequest("GET", "/pubsub/test", nil)
+		getRequest := httptest.NewRequest("GET", "/pubsub/test", nil)
 		go sendRequest(requestHandler, getRequest, requestRecorderChan, comChan)
 	}
 
@@ -51,7 +51,7 @@ func TestServeHttpMulti(test *testing.T) {
 	}
 
 	log.Println("TestServeHttpMulti", "sending POST req")
-	postRequest, _ := http.NewRequest("POST", "/pubsub/test", bytes.NewBuffer([]byte(testData)))
+	postRequest := httptest.NewRequest("POST", "/pubsub/test", bytes.NewBuffer([]byte(testData)))
 	requestRecorderPost := sendRequestSync(requestHandler, postRequest)
 
 	if !assertRequest("", requestRecorderPost, test) {
