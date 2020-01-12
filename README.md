@@ -1,4 +1,5 @@
 # Patch Hosts Service
+# Documentation
 This project is a reimplementation of https://patchbay.pub/ 
 (please read the [docs](https://patchbay.pub/docs/index.html)), with a few changes:
 ## Requester/Responder
@@ -52,6 +53,11 @@ make build
 will build the application, then start the application on port 9001 with a maximum request size of 10 MB,
 which are also the default values.
 # Docker
+Build and run in on go:
+```
+make docker
+```
+
 ## Build
 Build the image
 ```

@@ -16,3 +16,4 @@ docker_build:
 	docker build -t patch-hosts-service .
 docker_run:
 	docker run -p 9001:9001 -it patch-hosts-service
+docker: docker_build docker_run
