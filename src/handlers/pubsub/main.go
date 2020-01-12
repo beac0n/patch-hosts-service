@@ -41,4 +41,3 @@ func (reqHandler *ReqHandler) ServeHTTP(resWriter http.ResponseWriter, req *http
 		reqHandler.consume(req, resWriter, dataChan, comChan, persist)
 	}
 }
-

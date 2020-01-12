@@ -55,4 +55,3 @@ func NotGetOrPost(req *http.Request, resWriter http.ResponseWriter) bool {
 func IsCorrectPath(request *http.Request, path string) bool {
 	return strings.HasPrefix(request.URL.Path, path) && request.URL.Path != path
 }
-

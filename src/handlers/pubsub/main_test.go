@@ -27,7 +27,6 @@ func TestReqHandler_ServeHTTP_noConsumers(t *testing.T) {
 	utils.Assert(t, recorder.Code, http.StatusPreconditionFailed)
 }
 
-
 func TestReqHandler_ServeHTTP_contentLengthError(t *testing.T) {
 	postReq := httptest.NewRequest("POST", "/foobar", bytes.NewBuffer([]byte("")))
 
