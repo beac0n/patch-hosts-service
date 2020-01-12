@@ -8,7 +8,7 @@ schema:
   commands:
     build:
       status: true
-      method: go build -race -o build/patch-hosts-service-linux-amd64-dev src/main.go
+      method: go build -race -o build/patch-hosts-service-linux-amd64-dev src/main/main.go
     run:
       status: true
       method: build/patch-hosts-service-linux-amd64-dev

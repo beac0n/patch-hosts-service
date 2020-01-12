@@ -5,8 +5,6 @@ EXPOSE 9001
 
 COPY src src
 
-RUN cd src && go build main.go
-RUN mv src/main .
-RUN rm -rf src
+RUN go build -o patch-hosts-service-linux-amd64 src/main/main.go
 
-CMD ./main
+CMD ./patch-hosts-service-linux-amd64

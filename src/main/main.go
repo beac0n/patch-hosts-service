@@ -1,11 +1,11 @@
 package main
 
 import (
-	"./constants"
-	"./handlers/mpmc"
-	"./handlers/pubsub"
-	"./handlers/reqres"
-	"./utils"
+	"../constants"
+	"../handlers/mpmc"
+	"../handlers/pubsub"
+	"../handlers/reqres"
+	"../utils"
 	"flag"
 	"log"
 	"net/http"

@@ -1,7 +1,7 @@
 dev:
 	go get github.com/oxequa/realize; realize start
 build:
-	go build -o build/patch-hosts-service-linux-amd64 src/main.go
+	go build -o build/patch-hosts-service-linux-amd64 src/main/main.go
 clean:
 	rm -rf build
 	rm -f coverage.html
