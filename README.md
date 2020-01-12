@@ -25,7 +25,7 @@ start hot reloading dev server
 make dev
 ```
 ## build
-build binary and save it to `build/patchbay-server`
+build binary and save it to `build/patch-hosts-service-linux-amd64`
 ```
 make build
 ```
@@ -48,7 +48,7 @@ make clean
 You can configure the application by passing in command line flags:
 ```
 make build
-./build/patchbay-server -host=0.0.0.0:9001 -max_req_size=10
+./build/patch-hosts-service-linux-amd64 -host=0.0.0.0:9001 -max_req_size=10
 ```
 will build the application, then start the application on port 9001 with a maximum request size of 10 MB,
 which are also the default values.

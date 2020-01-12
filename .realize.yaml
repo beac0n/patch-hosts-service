@@ -3,15 +3,15 @@ settings:
     force: true
     interval: 0s
 schema:
-- name: patchbay-simple-server
+- name: patch-hosts-service
   path: .
   commands:
     build:
       status: true
-      method: go build -race -o build/patchbay-server-linux-amd64-dev src/main.go
+      method: go build -race -o build/patch-hosts-service-linux-amd64-dev src/main.go
     run:
       status: true
-      method: build/patchbay-server-linux-amd64-dev
+      method: build/patch-hosts-service-linux-amd64-dev
   watcher:
     extensions:
     - go
