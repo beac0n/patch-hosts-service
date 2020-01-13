@@ -1,10 +1,10 @@
 package mpmc
 
 import (
-	"../../constants"
-	"../../utils"
 	"io/ioutil"
 	"net/http"
+	"patch-hosts-service/src/constants"
+	"patch-hosts-service/src/utils"
 )
 
 func (reqHandler *ReqHandler) produce(req *http.Request, resWriter http.ResponseWriter, dataChan chan *[]byte) {

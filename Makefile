@@ -6,7 +6,7 @@ clean:
 	rm -rf build
 	rm -f coverage.html
 run:
-	build/patch-hosts-service-linux-amd64
+	go run src/main/main.go
 cov:
 	go test -tags=test -coverpkg=./... -cover -coverprofile coverage.html -v ./...
 	go tool cover -html=coverage.html

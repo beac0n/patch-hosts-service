@@ -1,8 +1,8 @@
 package mpmc
 
 import (
-	"../../utils"
 	"net/http"
+	"patch-hosts-service/src/utils"
 	"sync"
 )
 

@@ -1,9 +1,9 @@
 package pubsub
 
 import (
-	"../../utils"
 	"math"
 	"net/http"
+	"patch-hosts-service/src/utils"
 	"sync"
 )
 

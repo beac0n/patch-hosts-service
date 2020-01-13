@@ -1,9 +1,9 @@
 package utils
 
 import (
-	"../constants"
 	"log"
 	"net/http"
+	"patch-hosts-service/src/constants"
 	"runtime/debug"
 	"strconv"
 	"strings"

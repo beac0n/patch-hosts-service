@@ -1,11 +1,11 @@
 package pubsub
 
 import (
-	"../../utils"
 	"bytes"
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"patch-hosts-service/src/utils"
 	"testing"
 	"time"
 )

@@ -1,9 +1,9 @@
 package reqres
 
 import (
-	"../../constants"
-	"../../utils"
 	"net/http"
+	"patch-hosts-service/src/constants"
+	"patch-hosts-service/src/utils"
 	"sync"
 )
 

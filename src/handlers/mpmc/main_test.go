@@ -1,10 +1,10 @@
 package mpmc
 
 import (
-	"../../utils"
 	"bytes"
 	"net/http"
 	"net/http/httptest"
+	"patch-hosts-service/src/utils"
 	"testing"
 )
 

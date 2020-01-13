@@ -1,10 +1,10 @@
 package pubsub
 
 import (
-	"../../constants"
-	"../../utils"
 	"io/ioutil"
 	"net/http"
+	"patch-hosts-service/src/constants"
+	"patch-hosts-service/src/utils"
 	"sync"
 )
 

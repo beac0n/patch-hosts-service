@@ -1,14 +1,14 @@
 package main
 
 import (
-	"../constants"
-	"../handlers/mpmc"
-	"../handlers/pubsub"
-	"../handlers/reqres"
-	"../utils"
 	"flag"
 	"log"
 	"net/http"
+	"patch-hosts-service/src/constants"
+	"patch-hosts-service/src/handlers/mpmc"
+	"patch-hosts-service/src/handlers/pubsub"
+	"patch-hosts-service/src/handlers/reqres"
+	"patch-hosts-service/src/utils"
 )
 
 type ReqHandler struct {

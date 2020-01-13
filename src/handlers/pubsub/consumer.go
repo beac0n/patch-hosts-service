@@ -1,8 +1,8 @@
 package pubsub
 
 import (
-	"../../utils"
 	"net/http"
+	"patch-hosts-service/src/utils"
 )
 
 func (reqHandler *ReqHandler) consume(req *http.Request, resWriter http.ResponseWriter, dataChan chan *[]byte, comChan chan struct{}, persist bool) {
