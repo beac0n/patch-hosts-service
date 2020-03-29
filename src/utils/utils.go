@@ -34,9 +34,9 @@ func HttpErrorRequestEntityTooLarge(maxReqSize int64, request *http.Request, res
 	return true
 }
 
-func LoadAndStore(syncMap *sync.Map, key string, channelCreator func() interface{}) interface{} {
+func LoadAndStore(syncMap *sync.Map, key string, creator func() interface{}) interface{} {
 	if _, dataChannelOk := syncMap.Load(key); !dataChannelOk {
-		syncMap.Store(key, channelCreator())
+		syncMap.Store(key, creator())
 	}
 
 	dataChannelI, _ := syncMap.Load(key)
