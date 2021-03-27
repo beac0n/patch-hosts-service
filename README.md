@@ -1,5 +1,5 @@
 # Patch Hosts Service
-Just want to run the application?:
+run the application:
 ```
 PHS_BIN="patch-hosts-service-linux-amd64"; wget https://github.com/beac0n/patch-hosts-service/releases/download/v1.0.0/"${PHS_BIN}" -O /tmp/"${PHS_BIN}" && chmod +x /tmp/"${PHS_BIN}" && /tmp/"${PHS_BIN}"
 ```
